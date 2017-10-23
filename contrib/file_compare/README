@@ -1,0 +1,9 @@
+Three simple utilities have been created to assist with a quick parsing and verification of output 
+data files.
+
+file_compare -> prints the contents of 2 user-defined output files and displays the # of mismatching 
+                values
+
+global_file_read -> display the contents of an output file containing the global domain
+
+local_file_read -> display the contents of an output file containing the local domain
