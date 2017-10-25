@@ -219,13 +219,12 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			}
 			
 			fclose(FP5);
-#ifdef MPIIO			
 			sprintf(jac2,"%s_c.old",JACOBIAN);
+#ifdef MPIIO			
                         mergemod_par( jac2, waveconv );
 #else
 			/* merge gradient file */ 
 			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac2,"%s_c.old",JACOBIAN);
 			if (MYID==0) { mergemod(jac2,3); }
 #endif
 		}
@@ -242,13 +241,12 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		}
 		
 		fclose(FP4);
-#ifdef MPIIO		
 		sprintf(jac,"%s_p.old",JACOBIAN);
+#ifdef MPIIO		
                 mergemod_par( jac, gradp );
 #else
 		/* merge gradient file */ 
 		MPI_Barrier(MPI_COMM_WORLD);
-		sprintf(jac,"%s_p.old",JACOBIAN);
 		if (MYID==0) { mergemod(jac,3); }
 #endif
 	}
@@ -277,11 +275,6 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		taper_grad(waveconv_u,taper_coeff,srcpos,nsrc,recpos,ntr_glob,5);}
 		
 		/* save gradient */
-// MPCH- not sure
-#ifdef MPIIO 
-		sprintf(jac,"%s_g_u.old",JACOBIAN);
-	        mergemod_par( jac, waveconv_u );	
-#else
 		sprintf(jac,"%s_g_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 		FP3=fopen(jac,"wb");
 		
@@ -294,8 +287,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		fclose(FP3);
 		
 		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
 		sprintf(jac,"%s_g_u.old",JACOBIAN);
+#ifdef MPIIO 
+	        mergemod_par( jac, waveconv_u );	
+#else
+		MPI_Barrier(MPI_COMM_WORLD);
 		if (MYID==0) { mergemod(jac,3); }
 #endif
 		
@@ -410,11 +406,6 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		
 		/* output of the conjugate gradient */
 		if((iter>1)&&(use_conjugate_1)){
-//MPCH - not sure
-#ifdef MPIIO
-			sprintf(jac2,"%s_c_u.old",JACOBIAN);
-                        mergemod_par( jac2, waveconv_u );
-#else
 			sprintf(jac2,"%s_c_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP5=fopen(jac2,"wb");
 			
@@ -428,16 +419,15 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			
 			
 			/* merge gradient file */ 
-			MPI_Barrier(MPI_COMM_WORLD);
 			sprintf(jac2,"%s_c_u.old",JACOBIAN);
+#ifdef MPIIO
+                        mergemod_par( jac2, waveconv_u );
+#else
+			MPI_Barrier(MPI_COMM_WORLD);
 			if (MYID==0) { mergemod(jac2,3); }
 #endif
 		}
-//MPCH - not sure
-#ifdef MPIIO		
-		sprintf(jac,"%s_p_u.old",JACOBIAN);
-	        mergemod_par( jac, gradp_u );
-#else	
+
 		sprintf(jac,"%s_p_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 		FP4=fopen(jac,"wb");
 		
@@ -451,8 +441,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		fclose(FP4);
 		
 		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
 		sprintf(jac,"%s_p_u.old",JACOBIAN);
+#ifdef MPIIO		
+	        mergemod_par( jac, gradp_u );
+#else	
+		MPI_Barrier(MPI_COMM_WORLD);
 		if (MYID==0) { mergemod(jac,3); }
 #endif
 	}
@@ -478,11 +471,6 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		taper_grad(waveconv_rho,taper_coeff,srcpos,nsrc,recpos,ntr_glob,6);}
 		
 		/* save gradient */
-//MPCH - not sure
-#ifdef MPIIO
-		sprintf(jac,"%s_g_rho.old",JACOBIAN);
-	        mergemod_par( jac, waveconv_rho );
-#else
 		sprintf(jac,"%s_g_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 		FP3=fopen(jac,"wb");
 		
@@ -495,8 +483,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		fclose(FP3);
 			
 		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
 		sprintf(jac,"%s_g_rho.old",JACOBIAN);
+#ifdef MPIIO
+	        mergemod_par( jac, waveconv_rho );
+#else
+		MPI_Barrier(MPI_COMM_WORLD);
 		if (MYID==0) { mergemod(jac,3); }
 #endif
 	
@@ -610,11 +601,6 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		
 		/* output of the conjugate gradient */
 		if((iter>1)&&(use_conjugate_1)){
-//MPCH - not sure
-#ifdef MPIIO
-			sprintf(jac2,"%s_c_rho.old",JACOBIAN);
-                        mergemod_par( jac2, waveconv_rho );
-#else
 			sprintf(jac2,"%s_c_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP5=fopen(jac2,"wb");
 			
@@ -627,17 +613,15 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			fclose(FP5);
 			
 			/* merge gradient file */ 
-			MPI_Barrier(MPI_COMM_WORLD);
 			sprintf(jac2,"%s_c_rho.old",JACOBIAN);
+#ifdef MPIIO
+                        mergemod_par( jac2, waveconv_rho );
+#else
+			MPI_Barrier(MPI_COMM_WORLD);
 			if (MYID==0) {  mergemod(jac2,3); }
 #endif
 		}
 
-//MPCH - not sure
-#ifdef MPIIO		
-		sprintf(jac,"%s_p_rho.old",JACOBIAN);
-                mergemod_par( jac, gradp_rho );
-#else
 		sprintf(jac,"%s_p_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 		FP4=fopen(jac,"wb");
 		
@@ -651,8 +635,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		fclose(FP4);
 		
 		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
 		sprintf(jac,"%s_p_rho.old",JACOBIAN);
+#ifdef MPIIO		
+                mergemod_par( jac, gradp_rho );
+#else
+		MPI_Barrier(MPI_COMM_WORLD);
 		if (MYID==0) { mergemod(jac,3); }
 #endif
 	}
