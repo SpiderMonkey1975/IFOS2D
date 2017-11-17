@@ -9,6 +9,7 @@
 MODEL = ../genmod/1D_linear_gradient_visc.c
 MODEL_AC = ../genmod/1D_linear_gradient_ac.c
 MODEL_EL = ../genmod/1D_linear_gradient_el.c
+#MODEL_EL = ../genmod/G717_elastic_start.c
 MODEL_VAC = ../genmod/1D_linear_gradient_viscac.c
 MODEL_TEST = ../genmod/test.c
 

@@ -19,6 +19,7 @@ libcseife:
 
 .PHONY: IFOS2D 
 IFOS2D: aff fourier stfinv libcseife
+	mkdir -p ../bin
 ifdef MODEL
 	$(MAKE) -C ../src/ IFOS2D MODEL=$(MODEL)
 else
