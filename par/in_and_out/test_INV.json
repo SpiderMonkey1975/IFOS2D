@@ -27,7 +27,7 @@
 			"SRCREC" : "1",
 			"SRCREC values : read source positions from SOURCE_FILE=1, PLANE_WAVE=2" : "comment",
 			
-			"SOURCE_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/source/src.dat",
+			"SOURCE_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/source/src.dat",
 			"RUN_MULTIPLE_SHOTS" : "1",
 
 "Acoustic Computation" : "comment",
@@ -38,7 +38,7 @@
 
 "Model" : "comment",
 			"READMOD" : "0",
-			"MFILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/model_true/mod_test_INV",
+			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/mod_test_INV",
 
 "Free Surface" : "comment",
 			"FREE_SURF" : "1",
@@ -54,13 +54,13 @@
 "Receiver" : "comment",
 			"SEISMO" : "1",
 			"READREC" : "1",
-			"REC_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/receiver/recv.dat",
+			"REC_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/receiver/recv.dat",
 			"REFRECX, REFRECY" : "0.0 , 0.0",
 
 "Seismograms" : "comment",
 			"NDT" : "1",
 			"SEIS_FORMAT" : "1",
-			"SEIS_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/su/test",
+			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/test",
 
 "Q-approximation" : "comment",
 			"L" : "0",
@@ -72,7 +72,7 @@
 
 "General inversion parameters" : "comment",
 			"ITERMAX" : "1000",
-			"DATA_DIR" : "/group/pawsey0001/mcheeseman/IFOS2D/par/su/measured_data/test",
+			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data/test",
 			"PARAMETERIZATION" : "1",
 			"FORWARD_ONLY" : "0",
 			"ADJOINT_TYPE" : "1",
@@ -85,12 +85,12 @@
 			"INV_VS_ITER" : "0",
 
 "Output of inverted models" : "comment",
-			"INV_MODELFILE" : "model/test/test_INV",
+			"INV_MODELFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/test_INV",
 			"nfstart" : "1",
 			"nf" : "1",
 
 "Output of gradients" : "comment",
-			"JACOBIAN" : "jacobian/jac_test",
+			"JACOBIAN" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/jacobian/jac_test",
 			"nfstart_jac" : "1",
 			"nf_jac" : "1",
 

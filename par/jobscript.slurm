@@ -1,7 +1,7 @@
 #!/bin/bash --login
 # SLURM directives
 #SBATCH --nodes=4
-#SBATCH --time=00:10:00
+#SBATCH --time=01:00:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
 
@@ -21,16 +21,16 @@ module load fftw
 ##
 ## Change to the appropriate working directory
 ##---------------------------------------------
-cd /group/pawsey0001/mcheeseman/IFOS2D/par
+cd /group/pawsey0001/mcheeseman/IFOS2D
 
 ##
 ## Run the appropriate simulation
 ## (FORWARD SIMULATION)
 ##--------------------------------
-#time aprun -n 96 -N 24 ../bin/IFOS2D in_and_out/test_FW.json
+aprun -n 96 -N 24 /home/mcheeseman/IFOS2D/bin/IFOS2D /home/mcheeseman/IFOS2D/par/in_and_out/test_FW.json
 
 ## (INVERSE SIMULATION - no profiling)
-time aprun -n 96 -N 24 ../bin/IFOS2D in_and_out/test_INV.json
+aprun -n 96 -N 24 /home/mcheeseman/IFOS2D/bin/IFOS2D /home/mcheeseman/IFOS2D/par/in_and_out/test_INV.json
 
 ## (INVERSE SIMULATION - with profiling)
 #map -profile -n 96 -mpiargs "-N 24" ../bin/IFOS2D in_and_out/test_INV.json

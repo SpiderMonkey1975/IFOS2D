@@ -27,7 +27,7 @@
 			"SRCREC" : "1",
 			"SRCREC values : read source positions from SOURCE_FILE=1, PLANE_WAVE=2" : "comment",
 			
-			"SOURCE_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/source/src.dat",
+			"SOURCE_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/source/src.dat",
 			"RUN_MULTIPLE_SHOTS" : "1",
 
 "Acoustic Computation" : "comment",
@@ -38,7 +38,7 @@
 
 "Model" : "comment",
 			"READMOD" : "0",
-			"MFILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/model/test/test_true",
+			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/test_true",
 
 "Free Surface" : "comment",
 			"FREE_SURF" : "1",
@@ -54,13 +54,13 @@
 "Receiver" : "comment",
 			"SEISMO" : "1",
 			"READREC" : "1",
-			"REC_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/receiver/recv.dat",
+			"REC_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/receiver/recv.dat",
 			"REFRECX, REFRECY" : "0.0 , 0.0",
 
 "Seismograms" : "comment",
 			"NDT" : "1",
 			"SEIS_FORMAT" : "1",
-			"SEIS_FILE" : "/group/pawsey0001/mcheeseman/IFOS2D/par/su/measured_data/test",
+			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data/test",
 
 "Q-approximation" : "comment",
 			"L" : "0",
