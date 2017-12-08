@@ -116,7 +116,10 @@ ifeq ($(DEBUG),1)
   CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
 else 
   CXXFLAGS+=-fast -no-ipo
-ifeq ($(PROFILE),1)
+ifeq ($(ALLINEA),1)
+  CXXFLAGS+= -debug extended
+endif
+ifeq ($(CRAYPAT),1)
   CXXFLAGS+= -debug extended
 endif
 endif

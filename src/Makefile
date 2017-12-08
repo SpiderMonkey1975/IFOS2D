@@ -24,15 +24,17 @@ EXEC= ../bin
 # Use icc whenever possible, this will be much faster than gcc
 CXX=CC
 CC=cc
+CFLAGS=-fast -no-ipo
 LFLAGS=-lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
 ifeq ($(DEBUG),1)
   CFLAGS=-g -w2 -O0 -check=stack -traceback 
-else
-  CFLAGS=-fast -no-ipo
-ifeq ($(PROFILE),1)
+endif
+ifeq ($(ALLINEA),1)
   CFLAGS+= -debug extended
   LFLAGS+=-dynamic -L/group/pawsey0001/mcheeseman -lmap-sampler-pmpi -lmap-sampler -Wl,--eh-frame-hdr -Wl,-rpath=/group/pawsey0001/mcheeseman
 endif
+ifeq ($(CRAYPAT),1)
+  CFLAGS+= -debug extended
 endif
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
@@ -195,8 +197,15 @@ IFOS2D= \
 # Targes
 # -------------
 
+ifeq ($(CRAYPAT),1)
 IFOS2D:		$(IFOS_OBJ) fd.h
 	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC)/IFOS2D $(LFLAGS)
+	pat_build $(EXEC)/IFOS2D
+else
+IFOS2D:		$(IFOS_OBJ) fd.h
+	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC)/IFOS2D $(LFLAGS)
+endif
+
 
 all: IFOS2D snapmerge
 

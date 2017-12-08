@@ -102,7 +102,11 @@ ifeq ($(DEBUG),1)
 else 
   CFLAGS+=-fast -no-ipo
   FFLAGS+=-O3 -xAVX
-ifeq ($(PROFILE),1)
+ifeq ($(CRAYPAT),1)
+  CFLAGS+= -debug extended
+  FFLAGS+= -debug extended
+endif
+ifeq ($(ALLINEA),1)
   CFLAGS+= -debug extended
   FFLAGS+= -debug extended
 endif
