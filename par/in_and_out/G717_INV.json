@@ -27,7 +27,7 @@
 			"SRCREC" : "1",
 			"SRCREC values : read source positions from SOURCE_FILE=1, PLANE_WAVE=2" : "comment",
 			
-			"SOURCE_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/source/sources_G717.dat",
+			"SOURCE_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/source/sources_G717.dat",
 			"RUN_MULTIPLE_SHOTS" : "1",
 
 "Acoustic Computation" : "comment",
@@ -38,7 +38,7 @@
 
 "Model" : "comment",
 			"READMOD" : "0",
-			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/model/mod_G717_INV",
+			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/model/mod_G717_INV",
 
 "Free Surface" : "comment",
 			"FREE_SURF" : "1",
@@ -54,7 +54,7 @@
 "Receiver" : "comment",
 			"SEISMO" : "1",
 			"READREC" : "1",
-			"REC_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/receiver/rec_G717.dat",
+			"REC_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/receiver/rec_G717.dat",
 			"REFRECX, REFRECY" : "0.0 , 0.0",
 
 "Seismograms" : "comment",
@@ -72,7 +72,7 @@
 
 "General inversion parameters" : "comment",
 			"ITERMAX" : "1000",
-			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/measured_data/G717",
+			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/measured_data/G717",
 			"PARAMETERIZATION" : "1",
 			"FORWARD_ONLY" : "0",
 			"ADJOINT_TYPE" : "1",
@@ -85,12 +85,12 @@
 			"INV_VS_ITER" : "0",
 
 "Output of inverted models" : "comment",
-			"INV_MODELFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/model/G717_INV",
+			"INV_MODELFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/model/G717_INV",
 			"nfstart" : "1",
 			"nf" : "1",
 
 "Output of gradients" : "comment",
-			"JACOBIAN" : "/scratch/pawsey0001/mcheeseman/IFOS2D/jacobian/jac_G717",
+			"JACOBIAN" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/jacobian/jac_G717",
 			"nfstart_jac" : "1",
 			"nf_jac" : "1",
 

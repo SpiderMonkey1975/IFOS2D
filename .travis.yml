@@ -1,0 +1,13 @@
+language: c
+
+dist: Trusty
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y mpich2 libfftw3-dev
+
+script:
+  - export CC=mpicc
+  - cd par
+  - make clean
+  - make PARALLEL_IO=1
