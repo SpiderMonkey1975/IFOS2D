@@ -4,7 +4,7 @@
 ## testcase. Support for Allinea's MAP profiler is added.
 ##============================================================================
 
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 #SBATCH --time=00:50:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
@@ -15,14 +15,14 @@
 module swap PrgEnv-cray PrgEnv-intel
 module load fftw forge
 
-export MPICH_RANK_REORDER_METHOD=3
+#export MPICH_RANK_REORDER_METHOD=3
 export OMP_NUM_THREADS=1
 export LD_LIBRARY_PATH=/group/pawsey0001/mcheeseman:${LD_LIBRARY_PATH}
 
 #
 # Create an aprun run command to launch 24 MPI tasks on each node (96 in total) 
 #------------------------------------------------------------------------------
-run_cmd="aprun -n 96 -N 24"
+run_cmd="aprun -n 48 -N 24"
 
 #
 # Run the forward-only simulation (no profiling)

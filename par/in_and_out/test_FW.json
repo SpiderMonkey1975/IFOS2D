@@ -1,6 +1,6 @@
 {
 "Domain Decomposition" : "comment",
-			"NPROCX" : "12",
+			"NPROCX" : "6",
 			"NPROCY" : "8",
 
 "FD order" : "comment",
@@ -27,7 +27,7 @@
 			"SRCREC" : "1",
 			"SRCREC values : read source positions from SOURCE_FILE=1, PLANE_WAVE=2" : "comment",
 			
-			"SOURCE_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/source/src.dat",
+			"SOURCE_FILE" : "source/sources_TEST.dat",
 			"RUN_MULTIPLE_SHOTS" : "1",
 
 "Acoustic Computation" : "comment",
@@ -54,7 +54,7 @@
 "Receiver" : "comment",
 			"SEISMO" : "1",
 			"READREC" : "1",
-			"REC_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/receiver/recv.dat",
+			"REC_FILE" : "receiver/recv_TEST.dat",
 			"REFRECX, REFRECY" : "0.0 , 0.0",
 
 "Seismograms" : "comment",

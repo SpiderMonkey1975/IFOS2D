@@ -4,8 +4,8 @@
 ## testcase
 ##============================================================================
 
-#SBATCH --nodes=4
-#SBATCH --time=00:10:00
+#SBATCH --nodes=2
+#SBATCH --time=00:15:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
 
@@ -13,7 +13,7 @@
 # Set the runtime environment
 #-----------------------------
 export OMP_NUM_THREADS=1
-export MPICH_RANK_REORDER_METHOD=3
+export MPICH_RANK_REORDER_METHOD=1
 
 module swap PrgEnv-cray PrgEnv-intel
 module load fftw
@@ -21,7 +21,7 @@ module load fftw
 #
 # Create an aprun run command to launch 24 MPI tasks on each node (96 in total) 
 #------------------------------------------------------------------------------
-run_cmd="aprun -n 96 -N 24"
+run_cmd="aprun -n 48 -N 24"
 
 #
 # Run the forward-only simulation
