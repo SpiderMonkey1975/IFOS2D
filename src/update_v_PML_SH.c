@@ -350,3 +350,4 @@ void update_v_PML_SH(int nx1, int nx2, int ny1, int ny2, int nt,
         fprintf(FP," finished (real time: %4.2f s).\n",time2-time1);
     }
 }
+

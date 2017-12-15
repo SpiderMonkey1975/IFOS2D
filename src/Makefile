@@ -15,6 +15,8 @@ MODEL_TEST = ../genmod/test.c
 
 EXEC= ../bin
 
+include ../contrib/compilers/compiler.inc
+
 # Description:
 # CC = Compiler
 # LFLAGS = Linker flag
@@ -22,20 +24,20 @@ EXEC= ../bin
 
 # LINUX with OpenMPI / IntelMPI and INTEL Compiler
 # Use icc whenever possible, this will be much faster than gcc
-CXX=CC
-CC=cc
-CFLAGS=-fast -no-ipo
+#CXX=CC
+#CC=cc
+#CFLAGS=-fast -no-ipo
 LFLAGS=-lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
-ifeq ($(DEBUG),1)
-  CFLAGS=-g -w2 -O0 -check=stack -traceback 
-endif
+#ifeq ($(DEBUG),1)
+#  CFLAGS=-g -w2 -O0 -check=stack -traceback 
+#endif
 ifeq ($(ALLINEA),1)
-  CFLAGS+= -debug extended
+#  CFLAGS+= -debug extended
   LFLAGS+=-dynamic -L/group/pawsey0001/mcheeseman -lmap-sampler-pmpi -lmap-sampler -Wl,--eh-frame-hdr -Wl,-rpath=/group/pawsey0001/mcheeseman
 endif
-ifeq ($(CRAYPAT),1)
-  CFLAGS+= -debug extended
-endif
+#ifeq ($(CRAYPAT),1)
+#  CFLAGS+= -debug extended
+#endif
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
 
@@ -53,9 +55,15 @@ endif
 # pattern rules
 # -------------
 
+ifeq ($(CRAY_COMPILER),1)
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $< $(IFLAGS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -M $*.c $(IFLAGS) > $*.d
+else
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $< $(IFLAGS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MM $*.c $(IFLAGS) > $*.d
+endif
 
 SNAPMERGE_OBJ = $(SNAPMERGE_SCR:%.c=%.o)
 

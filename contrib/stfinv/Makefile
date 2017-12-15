@@ -111,18 +111,23 @@ INSTHEADER=$(addprefix $(INCINSTALLPATH)/,$(notdir $(LIBHEADERS)))
 #
 # compiler flags
 # --------------
-CXXFLAGS=-fPIC 
-ifeq ($(DEBUG),1)
-  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
-else 
-  CXXFLAGS+=-fast -no-ipo
-ifeq ($(ALLINEA),1)
-  CXXFLAGS+= -debug extended
-endif
-ifeq ($(CRAYPAT),1)
-  CXXFLAGS+= -debug extended
-endif
-endif
+
+include ../compilers/compiler.inc
+
+#CXX=CC
+#CC=cc
+#CXXFLAGS=-fPIC 
+#ifeq ($(DEBUG),1)
+#  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CXXFLAGS+=-fast -no-ipo
+#ifeq ($(ALLINEA),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#ifeq ($(CRAYPAT),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS+=-L$(LOCLIBDIR)
 CPPFLAGS+=-I$(LOCINCLUDEDIR) $(FLAGS)

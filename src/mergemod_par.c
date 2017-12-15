@@ -35,18 +35,19 @@ void mergemod_par( char modfile[STRING_SIZE], float ** data ){
      MPI_File fpout;
      MPI_Offset offset;
      MPI_Status status;
-     MPI_Info hint;
+//     MPI_Info hint;
 
-     MPI_Info_create( &hint );
-     MPI_Info_set( hint, "romio_cb_write", "enable" );
-     MPI_Info_set( hint, "romio_ds_write", "disable" );
-     MPI_Info_set( hint, "striping_unit", "1045504" );
-     MPI_Info_set( hint, "striping_unit", "1" );
+//     MPI_Info_create( &hint );
+//     MPI_Info_set( hint, "romio_cb_write", "enable" );
+///     MPI_Info_set( hint, "romio_ds_write", "disable" );
+//     MPI_Info_set( hint, "striping_unit", "1045504" );
+//     MPI_Info_set( hint, "striping_unit", "1" );
 
   /* New global output file created/opened */
-     MPI_Barrier( MPI_COMM_WORLD );
-     MPI_File_open( MPI_COMM_WORLD, modfile, MPI_MODE_CREATE|MPI_MODE_WRONLY, hint, &fpout );
-     MPI_Info_free( &hint );
+//     MPI_Barrier( MPI_COMM_WORLD );
+//     MPI_File_open( MPI_COMM_WORLD, modfile, MPI_MODE_CREATE|MPI_MODE_WRONLY, hint, &fpout );
+     MPI_File_open( MPI_COMM_WORLD, modfile, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fpout );
+//     MPI_Info_free( &hint );
 
   /* Transfer data from the individual files into the global data file */
 

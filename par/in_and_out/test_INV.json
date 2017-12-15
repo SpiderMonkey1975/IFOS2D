@@ -1,7 +1,7 @@
 {
 "Domain Decomposition" : "comment",
 			"NPROCX" : "6",
-			"NPROCY" : "8",
+			"NPROCY" : "16",
 
 "FD order" : "comment",
 			"FDORDER" : "4",
@@ -38,7 +38,7 @@
 
 "Model" : "comment",
 			"READMOD" : "0",
-			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/mod_test_INV",
+			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/model/mod_test_INV",
 
 "Free Surface" : "comment",
 			"FREE_SURF" : "1",
@@ -60,7 +60,7 @@
 "Seismograms" : "comment",
 			"NDT" : "1",
 			"SEIS_FORMAT" : "1",
-			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/test",
+			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/test",
 
 "Q-approximation" : "comment",
 			"L" : "0",
@@ -72,7 +72,7 @@
 
 "General inversion parameters" : "comment",
 			"ITERMAX" : "1000",
-			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data/test",
+			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/measured_data/test",
 			"PARAMETERIZATION" : "1",
 			"FORWARD_ONLY" : "0",
 			"ADJOINT_TYPE" : "1",
@@ -85,12 +85,12 @@
 			"INV_VS_ITER" : "0",
 
 "Output of inverted models" : "comment",
-			"INV_MODELFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/test_INV",
+			"INV_MODELFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/model/test_INV",
 			"nfstart" : "1",
 			"nf" : "1",
 
 "Output of gradients" : "comment",
-			"JACOBIAN" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/jacobian/jac_test",
+			"JACOBIAN" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/jacobian/jac_test",
 			"nfstart_jac" : "1",
 			"nf_jac" : "1",
 

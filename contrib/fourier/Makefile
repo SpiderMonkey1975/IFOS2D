@@ -113,28 +113,32 @@ RANLIB=ranlib
 FFTWLIB=-lfftw3
 #----------------------------------------------------------------------
 
-CFLAGS=-fPIC
-CXXFLAGS=-fPIC
-FFLAGS=-ff2c -extend-source -nbs -fPIC
-ifeq ($(DEBUG),1)
-  CFLAGS+=-g -w2 -O0 -check=stack -traceback
-  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
-  FFLAGS+=-g -w2 -O0 -check=stack -traceback
-else 
-  CFLAGS+=-fast -no-ipo
-  CXXFLAGS+=-fast -no-ipo
-  FFLAGS+=-O3 -xAVX
-ifeq ($(CRAYPAT),1)
-  CFLAGS+= -debug extended
-  CXXFLAGS+= -debug extended
-  FFLAGS+= -debug extended
-endif
-ifeq ($(ALLINEA),1)
-  CFLAGS+= -debug extended
-  CXXFLAGS+= -debug extended
-  FFLAGS+= -debug extended
-endif
-endif
+include ../compilers/compiler.inc
+
+#CXX=CC
+#CC=cc
+#CFLAGS=-fPIC
+#CXXFLAGS=-fPIC
+#FFLAGS=-ff2c -extend-source -nbs -fPIC
+#ifeq ($(DEBUG),1)
+#  CFLAGS+=-g -w2 -O0 -check=stack -traceback
+#  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
+#  FFLAGS+=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CFLAGS+=-fast -no-ipo
+#  CXXFLAGS+=-fast -no-ipo
+#  FFLAGS+=-O3 -xAVX
+#ifeq ($(CRAYPAT),1)
+#  CFLAGS+= -debug extended
+#  CXXFLAGS+= -debug #extended
+#  FFLAGS+= -debug extended
+#endif
+#ifeq ($(ALLINEA),1)
+#  CFLAGS+= -debug extended
+#  CXXFLAGS+= -debug extended
+#  FFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS+=-L$(LOCLIBDIR) -fPIC
 CPPFLAGS+=-I$(LOCINCLUDEDIR) $(FLAGS)
@@ -191,17 +195,17 @@ LIBINSTALLPATH=$(LOCLIBDIR)
 INSTHEADER=$(addprefix $(INCINSTALLPATH)/,$(filter-out ./tests/%,$(HEADERS)))
 
 # compiler and preprocessor flags
-ifeq ($(DEBUG),1)
-  CXXFLAGS=-g -w2 -O0 -check=stack -traceback
-else 
-  CXXFLAGS=-fast -no-ipo
-ifeq ($(CRAYPAT),1)
-  CXXFLAGS+= -debug extended
-endif
-ifeq ($(ALLINEA),1)
-  CXXFLAGS+= -debug extended
-endif
-endif
+#ifeq ($(DEBUG),1)
+#  CXXFLAGS=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CXXFLAGS=-fast -no-ipo
+#ifeq ($(CRAYPAT),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#ifeq ($(ALLINEA),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS += -L$(LOCLIBDIR)
 CPPFLAGS += -I$(LOCINCLUDEDIR) $(FLAGS)

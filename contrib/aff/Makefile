@@ -104,20 +104,27 @@ LIBINSTALLPATH=$(LOCLIBDIR)
 INSTHEADER=$(addprefix $(INCINSTALLPATH)/,$(filter-out ./tests/%,$(HEADERS)))
 
 #======================================================================
+
+include ../compilers/compiler.inc
+
+
 # compiler and preprocessor flags
 # -------------------------------
-CXXFLAGS=-fPIC 
-ifeq ($(DEBUG),1)
-  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
-else 
-  CXXFLAGS+=-fast -no-ipo
-ifeq ($(ALLINEA),1)
-  CXXFLAGS+= -debug extended
-endif
-ifeq ($(CRAYPAT),1)
-  CXXFLAGS+= -debug extended
-endif
-endif
+#CXX=CC
+#CC=cc
+#CXXFLAGS=-fPIC 
+#ifeq ($(DEBUG),1)
+#  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CXXFLAGS+=-fast -no-ipo
+#  CXXFLAGS+=-fast -no-ipo
+#ifeq ($(ALLINEA),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#ifeq ($(CRAYPAT),1)
+#  CXXFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS=$(addprefix -L,$(LOCLIBDIR) $(subst :, ,$(SERVERLIBDIR)))
 CPPFLAGS=$(addprefix -I,$(LOCINCLUDEDIR) $(subst :, ,$(SERVERINCLUDEDIR))) \

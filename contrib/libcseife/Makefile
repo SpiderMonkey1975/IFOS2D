@@ -95,22 +95,27 @@ AR=ar
 AS=as
 RANLIB=ranlib
 
-FFLAGS=-ff2c -extend-source -Isubs
-ifeq ($(DEBUG),1)
-  CFLAGS+=-g -w2 -O0 -check=stack -traceback
-  FFLAGS+=-g -w2 -O0 -check=stack -traceback
-else 
-  CFLAGS+=-fast -no-ipo
-  FFLAGS+=-O3 -xAVX
-ifeq ($(CRAYPAT),1)
-  CFLAGS+= -debug extended
-  FFLAGS+= -debug extended
-endif
-ifeq ($(ALLINEA),1)
-  CFLAGS+= -debug extended
-  FFLAGS+= -debug extended
-endif
-endif
+include ../compilers/compiler.inc
+
+#CXX=CC
+#CC=cc
+
+#FFLAGS=-ff2c -extend-source -Isubs
+#ifeq ($(DEBUG),1)
+#  CFLAGS+=-g -w2 -O0 -check=stack -traceback
+#  FFLAGS+=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CFLAGS+=-fast -no-ipo
+#  FFLAGS+=-O3 -xAVX
+#ifeq ($(CRAYPAT),1)
+#  CFLAGS+= -debug extended
+#  FFLAGS+= -debug extended
+#endif
+#ifeq ($(ALLINEA),1)
+#  CFLAGS+= -debug extended
+#  FFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS+=$(addprefix -L,$(LOCLIBDIR) $(subst :, ,$(SERVERLIBDIR)))
 CPPFLAGS+=$(addprefix -I,$(LOCINCLUDEDIR) $(subst :, ,$(SERVERINCLUDEDIR))) \

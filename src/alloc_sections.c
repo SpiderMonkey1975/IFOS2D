@@ -201,3 +201,4 @@ void alloc_sections(int ntr,int ns,float ***sectionvx,float ***sectionvy,float *
         free_matrix(sectionvzdiffold,1,ntr,1,ns);
     }
  }
+

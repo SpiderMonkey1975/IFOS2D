@@ -54,7 +54,8 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     char jac[225],jac2[225];
     FILE *FP_JAC = NULL,*FP_JAC2 = NULL,*FP_JAC3 = NULL;
 
-    float io_data[NY][NX];
+//mpch    float io_data[NY][NX];
+    float **io_data;
     
     if(GRAD_METHOD==2&&(itest==0)){
         w=iter%N_LBFGS;
@@ -345,7 +346,13 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
             }
         }
     }
-    
+   
+#ifdef MPIIO
+    io_data = (float **)malloc( NY*sizeof(float *) );
+    for ( i=0; i<NY; i++ )
+        io_data[i] = (float *)malloc( NX*sizeof(float) );
+#endif
+ 
     if(GRAD_METHOD==2&&(itest==0)){
         if(!ACOUSTIC){
 #ifdef MPIIO
@@ -409,6 +416,13 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
             remove(jac);
 #endif
         }
+
+#ifdef MPIIO
+    for ( i=0; i<NY; i++ )
+        free( io_data[i] );
+    free( io_data );
+#endif
+
     }
     if(!ACOUSTIC)
         if((MYID==0)&&(pr==1))printf("\nThe Vp/Vs-ratio of %4.2f is violated. P-wave velocity will be increased that the Vp/Vs-ratio is at least %4.2f \n",VP_VS_RATIO,VP_VS_RATIO);

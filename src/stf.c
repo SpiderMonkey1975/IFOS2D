@@ -359,3 +359,4 @@ void stf(FILE *fp, float **sectionvy, float ** sectionvy_obs, float ** sectionvy
 		free_ivector(kill_vector,1,ntr_glob);
 	}
 }
+
