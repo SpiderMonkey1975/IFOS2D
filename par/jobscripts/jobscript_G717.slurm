@@ -22,11 +22,20 @@ module load fftw
 run_cmd="aprun -n 960 -N 24"
 
 #
-# Run the forward-only simulation
-#-------------------------------------------------------
-$run_cmd ../bin/IFOS2D in_and_out/G717_FW.json
+# Setup the simulation output directory
+#---------------------------------------
+WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D
+if [ -d "$WORKDIR/TEST" ]; then
+   find ${WORKDIR}/TEST -type f -print0 | xargs -0 munlink
+   find ${WORKDIR}/TEST -type d -empty -delete
+fi
+
+mkdir -p ${WORKDIR}/TEST/jacobian
+mkdir -p ${WORKDIR}/TEST/measured_data
+mkdir -p ${WORKDIR}/TEST/model
 
 #
-# Run the inverse simulation
-#----------------------------
+# Run the forward-only simulation and then the inverse simulation
+#-----------------------------------------------------------------
+$run_cmd ../bin/IFOS2D in_and_out/G717_FW.json
 $run_cmd ../bin/IFOS2D in_and_out/G717_INV.json
