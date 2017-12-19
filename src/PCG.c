@@ -35,7 +35,7 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
     extern int start_iter;
 	char jac[225], jac2[225];
 	int i, j;
-	float betaz, betan, gradplastiter, gradclastiter, betar, beta;
+	float betaz, betan, gradplastiter, gradclastiter, betar, beta, beta_vector[2], tmp_vector[2];
 	extern FILE *FP;
     int use_conjugate_1=1;
     int use_conjugate_2=1;
@@ -169,14 +169,23 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 				betan += (gradplastiter) * (gradplastiter);
 			}
 			}
+                      
+                        tmp_vector[0] = betaz;
+                        tmp_vector[1] = betan;
+                        beta_vector[0] = 0.0;
+                        beta_vector[1] = 0.0;
+			MPI_Allreduce( tmp_vector, beta_vector, 2, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD );
 			
-			betar = 0.0;
-			MPI_Allreduce(&betaz,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
-			betaz = betar;
+                        betaz = tmp_vector[0];
+                        betan = tmp_vector[1];
+
+//mpch			betar = 0.0;
+//			MPI_Allreduce(&betaz,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+//			betaz = betar;
 			
-			betar = 0.0;
-			MPI_Allreduce(&betan,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
-			betan = betar;
+//			betar = 0.0;
+//			MPI_Allreduce(&betan,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
+//			betan = betar;
 			
 			beta = 0.0f;
 			if(betan !=0.0f) beta = betaz/betan;
@@ -185,26 +194,40 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			if(beta<0.0){beta = 0.0;}
 			
 			fseek(FP6,0,SEEK_SET);
-			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				
-				if(iter==2){
-					fread(&gradplastiter,sizeof(float),1,FP6);
-					waveconv[j][i] = gradp[j][i] + gradplastiter * beta;
-				}
-				
-				if((iter>2)&&(use_conjugate_2)){
-					fread(&gradclastiter,sizeof(float),1,FP5);
-					waveconv[j][i] = gradp[j][i] + gradclastiter * beta;
-				}
-				
-			}
-			}
-			
+
+                        if (iter==2) {
+                           for (i=1;i<=NX;i=i+IDX){
+                           for (j=1;j<=NY;j=j+IDY){
+                               fread(&gradplastiter,sizeof(float),1,FP6);
+                               waveconv[j][i] = gradp[j][i] + gradplastiter * beta; }} }                       
 			fclose(FP6);
+                  
+                        if ((iter>2)&&(use_conjugate_2)) {
+                           for (i=1;i<=NX;i=i+IDX){
+                           for (j=1;j<=NY;j=j+IDY){
+                               fread(&gradclastiter,sizeof(float),1,FP5);
+                               waveconv[j][i] = gradp[j][i] + gradclastiter * beta; }} 
+                           fclose(FP5); }
+
 			
-			if((iter>2)&&(use_conjugate_2)){fclose(FP5);}
+//mpch			for (i=1;i<=NX;i=i+IDX){
+//			for (j=1;j<=NY;j=j+IDY){
+//				
+//				if(iter==2){
+//					fread(&gradplastiter,sizeof(float),1,FP6);
+//					waveconv[j][i] = gradp[j][i] + gradplastiter * beta;
+//				}
+//				
+//				if((iter>2)&&(use_conjugate_2)){
+//					fread(&gradclastiter,sizeof(float),1,FP5);
+//					waveconv[j][i] = gradp[j][i] + gradclastiter * beta;
+//				}
+//				
+//			}
+//			}
+//			fclose(FP6);
+//			
+//			if((iter>2)&&(use_conjugate_2)){fclose(FP5);}
 		}
 		
 		/* output of the conjugate gradient */
@@ -219,11 +242,12 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			}
 			
 			fclose(FP5);
-			sprintf(jac2,"%s_c.old",JACOBIAN);
 #ifdef MPIIO			
+			sprintf(jac2,"%s_c.old",JACOBIAN);
                         mergemod_par( jac2, waveconv );
 #else
 			/* merge gradient file */ 
+			sprintf(jac2,"%s_c.old",JACOBIAN);
 			MPI_Barrier(MPI_COMM_WORLD);
 			if (MYID==0) { mergemod(jac2,3); }
 #endif
