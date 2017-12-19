@@ -38,7 +38,7 @@
 
 "Model" : "comment",
 			"READMOD" : "0",
-			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/model/test_true",
+			"MFILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model/test_true",
 
 "Free Surface" : "comment",
 			"FREE_SURF" : "1",
@@ -60,7 +60,7 @@
 "Seismograms" : "comment",
 			"NDT" : "1",
 			"SEIS_FORMAT" : "1",
-			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST_new/measured_data/test",
+			"SEIS_FILE" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data/test",
 
 "Q-approximation" : "comment",
 			"L" : "0",
