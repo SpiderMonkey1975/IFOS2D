@@ -8,49 +8,53 @@ please use the script IFOS/doc/compile_LaTeX_manual.sh
 To compile IFOS2D a MAKEFILE is available in the IFOS/par directory. To
 use the MAKEFILE type
 
-make
+make <COMPILER_OPTIONS>
 
-in the IFOS/par directory. The MAKEFILE compiles the additional libaries
+in the IFOS2D/par directory. COMPILER_OPTIONS are optional arguments.  Valid 
+values for COMPILER_OPTIONS are described below.  The MAKEFILE compiles 
+the additional libaries
 
 lib cseife
 lib stfinv
 lib aff
 lib fourier
 
-before compiling the main program IFOS.
+before compiling the main program IFOS2D.
 
 -------------------------------------------
 
 There are several known dependencies:
 
-- GCC / ICC
-- OpenMPI / Intel MPF
-- fftw3
-- stdc++
-- math library (libm.a)
-
--------------------------------------------
-
-Systems/environments the code was already successfully build on:
-
-- Linux 2.6.31.14-0.6-desktop x86_64 
-- MacOSX 10.11.1 with OpenMPI 1.10.0 and gcc-Version 5.1.0
+- working C/C++ compiler (Intel ICC and GNU gcc/g++ tested)
+- working MPI implementation
+- FFTW library (version 3)
+- standard c++ and math libraries (libstdc.a, libm.a)
 
 -------------------------------------------
 
 
-USING PARALLEL-IO USING IFOS2D
-==============================
+VALID COMPILER OPTIONS
+======================
 
-If you are running IFOS2D on a cluster with a parallel filesystem (like Lustre or GPFS),
-it is strongly recommended that you build and run IFOS2D with parallel IO enabled.
+As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a 
+number of optional arguments:
 
-One can enable parallel IO by passing in the PARALLEL_IO make variable when building
-IFOS2D.  I.e. instead of just using
+  PARALLEL_IO    -> set to 1 if the user wishes to enable parallel IO. If you are 
+                    running IFOS2D on a cluster with a parallel filesystem 
+                    (like Lustre or GPFS), this can increase performance significantly.
 
-   make
+  INTEL_COMPILER -> set to 1 if you wish to build IFOS2D with the Intel suite of 
+                    compilers (icc/icpc/ifort).  Note that this is default.
 
-use the the following command
+  GNU_COMPILER   -> set to 1 if you wish to build IFOS2D with the GNU suite of 
+                    compilers (gcc/g++/gfortran).  
 
-   make PARALLEL_IO=1 
+  CRAY_COMPILER  -> set to 1 if you wish to build IFOS2D with the CRAY suite of 
+                    compilers (craycc). NOT YET OPERATIONAL.  
+
+
+Example: to build IFOS2D with the Intel compilers and with parallel I/O enabled,
+         one would use the following make command:
+
+          make PARALLEL_IO=1 INTEL_COMPILER=1
 
