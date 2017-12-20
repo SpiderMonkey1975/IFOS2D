@@ -71,7 +71,7 @@
 			
 
 "General inversion parameters" : "comment",
-			"ITERMAX" : "1000",
+			"ITERMAX" : "200",
 			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data/test",
 			"PARAMETERIZATION" : "1",
 			"FORWARD_ONLY" : "0",
