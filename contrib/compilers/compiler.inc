@@ -10,10 +10,9 @@ ifeq ($(CRAYPAT), 1)
 endif   
 
 ##-------------------------------------------------------
-## INTEL-specific compiler settings
+## INTEL-specific compiler settings (default)
 ##-------------------------------------------------------
 
-ifeq ($(INTEL_COMPILER),1)
 FFLAGS=-fPIC -O3 -xAVX -ff2c -extend-source -nbs
 CFLAGS=-fPIC -fast -no-ipo
 CXXFLAGS=-fPIC -fast -no-ipo
@@ -28,7 +27,6 @@ ifeq ($(PROFILE), 1)
   FFLAGS+= -debug extended
   CFLAGS+= -debug extended
   CXXFLAGS+= -debug extended
-endif
 endif
 
 ##-------------------------------------------------------
