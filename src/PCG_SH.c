@@ -39,6 +39,7 @@ void PCG_SH(float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int 
     int use_conjugate_1=1;
     int use_conjugate_2=1;
 
+    
     /* Check if conjugate gradient can be used */
     if( (iter-PCG_iter_start) < 2 ) {
         use_conjugate_2=0;

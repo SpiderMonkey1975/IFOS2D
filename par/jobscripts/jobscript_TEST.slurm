@@ -36,5 +36,5 @@ mkdir -p ${WORKDIR}/TEST/model
 #
 # Run the forward-only simulation and then the inverse simulation
 #-----------------------------------------------------------------
-$run_cmd ../bin/IFOS2D in_and_out/test_FW.json
+time $run_cmd ../bin/IFOS2D in_and_out/test_FW.json
 time $run_cmd ../bin/IFOS2D in_and_out/test_INV.json
