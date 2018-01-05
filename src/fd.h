@@ -89,10 +89,6 @@ void checkfd_ssg_visc(FILE *fp, float ** prho, float ** ppi, float ** pu, float 
 void checkfd_rsg(FILE *fp, float ** prho, float ** ppi, float ** pu,
                  float ** ptaus, float ** ptaup, float *peta);
 
-void comm_ini(float ** bufferlef_to_rig, float ** bufferrig_to_lef,
-              float ** buffertop_to_bot, float ** bufferbot_to_top,
-              MPI_Request *req_send, MPI_Request *req_rec);
-
 void conv_FD(float * temp_TS, float * temp_TS1, float * temp_conv, int ns);
 
 void count_killed_traces(int ntr, int swstestshot, int ntr_glob, int **recpos_loc, int nsrc_glob, int ishot, int* ptr_killed_traces, int* ptr_killed_traces_testshots,float ** srcpos, int ** recpos);
@@ -116,7 +112,7 @@ void exchange_rsg_4th(float ** vx, float ** vy, float ** vz,
 void exchange_v(float ** vx, float ** vy, float ** vz,
                 float ** bufferlef_to_rig, float ** bufferrig_to_lef,
                 float ** buffertop_to_bot, float ** bufferbot_to_top,
-                MPI_Request * req_send, MPI_Request * req_rec, int wavetyp_start);
+                int wavetyp_start);
 
 void exchange_s(float ** sxx, float ** syy,
                 float ** sxy,float ** sxz,float ** syz, float ** bufferlef_to_rig, float ** bufferrig_to_lef,

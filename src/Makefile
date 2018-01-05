@@ -100,7 +100,6 @@ IFOS2D= \
 	count_killed_traces.c \
 	psource.c \
 	holbergcoeff.c\
-	comm_ini.c\
 	exchange_v.c \
 	exchange_s.c \
 	exchange_p.c \

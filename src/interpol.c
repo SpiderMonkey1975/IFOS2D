@@ -27,7 +27,7 @@ void interpol(int IDXI, int IDYI, float **  intvar){
 
      int i, j;
      extern int NX, NY, POS[3], NPROCX, NPROCY, INDEX[5], BOUNDARY;
-     MPI_Status status, stat2[2];
+     MPI_Status stat[2];
      MPI_Request req[2];	
      float *buf, *recv_buf;
         
@@ -40,10 +40,7 @@ void interpol(int IDXI, int IDYI, float **  intvar){
  
      MPI_Isend( buf, NX, MPI_FLOAT, INDEX[3], 3, MPI_COMM_WORLD, &req[0] );                   
      MPI_Irecv( recv_buf, NX, MPI_FLOAT, INDEX[4], 3, MPI_COMM_WORLD, &req[1] );
-     MPI_Waitall( 2, req, stat2 );
-//     MPI_Bsend( buf, NX, MPI_FLOAT, INDEX[3], 3, MPI_COMM_WORLD );
-//     MPI_Barrier(MPI_COMM_WORLD);
-//     MPI_Recv( buf, NX, MPI_FLOAT, INDEX[4], 3, MPI_COMM_WORLD, &status );
+     MPI_Waitall( 2, req, stat );
                                                                               
      if (POS[2]!=NPROCY-1){   /* no boundary exchange at bottom of global grid */
         for (i=1;i<=NX;i++) { intvar[NY+1][i]=recv_buf[i-1];} }
@@ -62,10 +59,7 @@ void interpol(int IDXI, int IDYI, float **  intvar){
   
      MPI_Isend( buf, NY, MPI_FLOAT, INDEX[1], 3, MPI_COMM_WORLD, &req[0] );                   
      MPI_Irecv( recv_buf, NY, MPI_FLOAT, INDEX[2], 3, MPI_COMM_WORLD, &req[1] );
-     MPI_Waitall( 2, req, stat2 );
-//     MPI_Bsend( buf, NY, MPI_FLOAT, INDEX[1], 3, MPI_COMM_WORLD );
-//     MPI_Barrier(MPI_COMM_WORLD);
-//     MPI_Recv( buf, NY, MPI_FLOAT, INDEX[2], 3, MPI_COMM_WORLD, &status );
+     MPI_Waitall( 2, req, stat );
   
      if ((BOUNDARY) || (POS[1]!=NPROCX-1)){   /* no boundary exchange at bottom of global grid */
         for (j=1;j<=NY;j++) { intvar[j][NX+1]=recv_buf[j-1]; }}

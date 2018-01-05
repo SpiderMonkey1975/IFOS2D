@@ -28,8 +28,7 @@
 void exchange_v(float ** vx, float ** vy, float ** vz,
                 float ** bufferlef_to_rig, float ** bufferrig_to_lef,
                 float ** buffertop_to_bot, float ** bufferbot_to_top,
-                MPI_Request * req_send, MPI_Request * req_rec, int wavetyp_start){
-    
+                int wavetyp_start){
     
     extern int NX, NY, POS[3], NPROCX, NPROCY, BOUNDARY, FDORDER, WAVETYPE;
     extern int INDEX[5];

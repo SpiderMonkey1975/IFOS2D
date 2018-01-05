@@ -314,43 +314,43 @@ int main(int argc, char **argv){
     }
     
     
-    if (L){
-        memdyn=(5.0+3.0*(float)L)*fac1*fac2;
-        memmodel=(12.0+3.0*(float)L)*fac1*fac2;
-        
-    } else {
-        memdyn=5.0*fac1*fac2;
-        memmodel=6.0*fac1*fac2;
-    }
-    memseismograms=nseismograms*ntr*ns*fac2;
+//    if (L){
+//        memdyn=(5.0+3.0*(float)L)*fac1*fac2;
+//        memmodel=(12.0+3.0*(float)L)*fac1*fac2;
+//        
+//    } else {
+//        memdyn=5.0*fac1*fac2;
+//        memmodel=6.0*fac1*fac2;
+//    }
+//    memseismograms=nseismograms*ntr*ns*fac2;
     
-    memfwt=5.0*((NX/IDXI)+FDORDER)*((NY/IDYI)+FDORDER)*NTDTINV*fac2;
-    memfwt1=20.0*NX*NY*fac2;
-    memfwtdata=6.0*ntr*ns*fac2;
+//    memfwt=5.0*((NX/IDXI)+FDORDER)*((NY/IDYI)+FDORDER)*NTDTINV*fac2;
+//    memfwt1=20.0*NX*NY*fac2;
+//    memfwtdata=6.0*ntr*ns*fac2;
     
-    membuffer=2.0*fdo3*(NY+NX)*fac2;
-    buffsize=2.0*2.0*fdo3*(NX+NY)*sizeof(MPI_FLOAT);
-    memtotal=memdyn+memmodel+memseismograms+memfwt+memfwt1+memfwtdata+membuffer+(buffsize*pow(2.0,-20.0));
+//    membuffer=2.0*fdo3*(NY+NX)*fac2;
+//    buffsize=2.0*2.0*fdo3*(NX+NY)*sizeof(MPI_FLOAT);
+//    memtotal=memdyn+memmodel+memseismograms+memfwt+memfwt1+memfwtdata+membuffer+(buffsize*pow(2.0,-20.0));
     
     
-    if (MYID==0 && WAVETYPE == 1){
-        fprintf(FP,"\n **Message from main (printed by PE %d):\n",MYID);
-        fprintf(FP," Size of local grids: NX=%d \t NY=%d\n",NX,NY);
-        fprintf(FP," Each process is now trying to allocate memory for:\n");
-        fprintf(FP," Dynamic variables: \t\t %6.2f MB\n", memdyn);
-        fprintf(FP," Static variables: \t\t %6.2f MB\n", memmodel);
-        fprintf(FP," Seismograms: \t\t\t %6.2f MB\n", memseismograms);
-        fprintf(FP," Buffer arrays for grid exchange:%6.2f MB\n", membuffer);
-        fprintf(FP," Network Buffer for MPI_Bsend: \t %6.2f MB\n", buffsize*pow(2.0,-20.0));
-        fprintf(FP," ------------------------------------------------ \n");
-        fprintf(FP," Total memory required: \t %6.2f MB.\n\n", memtotal);
-    }
+//    if (MYID==0 && WAVETYPE == 1){
+//        fprintf(FP,"\n **Message from main (printed by PE %d):\n",MYID);
+//        fprintf(FP," Size of local grids: NX=%d \t NY=%d\n",NX,NY);
+//        fprintf(FP," Each process is now trying to allocate memory for:\n");
+//        fprintf(FP," Dynamic variables: \t\t %6.2f MB\n", memdyn);
+//        fprintf(FP," Static variables: \t\t %6.2f MB\n", memmodel);
+//        fprintf(FP," Seismograms: \t\t\t %6.2f MB\n", memseismograms);
+//        fprintf(FP," Buffer arrays for grid exchange:%6.2f MB\n", membuffer);
+//        fprintf(FP," Network Buffer for MPI_Bsend: \t %6.2f MB\n", buffsize*pow(2.0,-20.0));
+//        fprintf(FP," ------------------------------------------------ \n");
+//        fprintf(FP," Total memory required: \t %6.2f MB.\n\n", memtotal);
+//    }
     
     
     /* allocate buffer for buffering messages */
-    buff_addr=malloc(buffsize);
-    if (!buff_addr) declare_error("allocation failure for buffer for MPI_Bsend !");
-    MPI_Buffer_attach(buff_addr,buffsize);
+//    buff_addr=malloc(buffsize);
+//    if (!buff_addr) declare_error("allocation failure for buffer for MPI_Bsend !");
+//    MPI_Buffer_attach(buff_addr,buffsize);
     
     /* allocation for request and status arrays */
     req_send=(MPI_Request *)malloc(REQUEST_COUNT*sizeof(MPI_Request));
@@ -1234,7 +1234,7 @@ int main(int argc, char **argv){
                                 }
                                 
                                 /* exchange of particle velocities between PEs */
-                                exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                                exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
                                 
                                 if (MYID==0){
                                     time5=MPI_Wtime();
@@ -1677,7 +1677,7 @@ int main(int argc, char **argv){
                             }
                             
                             /* exchange of particle velocities between PEs */
-                            exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                            exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
                             
                             if (MYID==0){
                                 time5=MPI_Wtime();
@@ -2183,7 +2183,7 @@ int main(int argc, char **argv){
                                     }
                                     
                                     /* exchange of particle velocities between PEs */
-                                    exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                                    exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
                                     
                                     if (MYID==0){
                                         time5=MPI_Wtime();
@@ -3399,7 +3399,7 @@ int main(int argc, char **argv){
                             }
                             
                             /* exchange of particle velocities between PEs */
-                            exchange_v(pvx, pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                            exchange_v(pvx, pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
                             
                             if (MYID==0){
                                 time5=MPI_Wtime();
@@ -4382,7 +4382,7 @@ int main(int argc, char **argv){
     }
     
     /* de-allocate buffer for messages */
-    MPI_Buffer_detach(buff_addr,&buffsize);
+//    MPI_Buffer_detach(buff_addr,&buffsize);
     
     fclose(FP);
     

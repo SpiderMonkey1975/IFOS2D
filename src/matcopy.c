@@ -28,110 +28,87 @@
 
 void matcopy(float ** rho, float ** pi, float ** u, float ** taus, float ** taup){
 
-	extern int MYID, NX, NY, INDEX[5],VERBOSE;
-	extern const int TAG1,TAG2,TAG5,TAG6;
-	extern FILE *FP;
+	extern int NX, NY, INDEX[5];
+	extern const int TAG1, TAG5;
 
-	MPI_Status status;	
-	int i, j;
-	float ** bufferlef_to_rig, ** bufferrig_to_lef, ** buffertop_to_bot, ** bufferbot_to_top;
+	MPI_Status status, stat[2];
+        MPI_Request req[2];	
+	int i, n;
+        float *send_buf, *recv_buf;
 
-	bufferlef_to_rig = matrix(0,NY+1,1,5);
-	bufferrig_to_lef = matrix(0,NY+1,1,5);
-	buffertop_to_bot = matrix(0,NX+1,1,5);
-	bufferbot_to_top = matrix(0,NX+1,1,5);
+        send_buf = (float *)malloc( 10*NX*sizeof(float) );
+        recv_buf = (float *)malloc( 10*NX*sizeof(float) );
     
-	for (i=0;i<=NX+1;i++){
-			/* storage of top of local volume into buffer */
-			buffertop_to_bot[i][1]  =  rho[1][i];
-			buffertop_to_bot[i][2]  =  pi[1][i];
-			buffertop_to_bot[i][3]  =  u[1][i];
-			buffertop_to_bot[i][4]  = taus[1][i];
-			buffertop_to_bot[i][5]  = taup[1][i];
-	}
+     /* storage of top of local volume into buffer */
+        n = 0;
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = rho[1][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = pi[1][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = u[1][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = taus[1][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = taup[1][i]; n++; } 
 
-	for (i=0;i<=NX+1;i++){
-			
-			/* storage of bottom of local volume into buffer */
-			bufferbot_to_top[i][1]  =  rho[NY][i];
-			bufferbot_to_top[i][2]  =  pi[NY][i];
-			bufferbot_to_top[i][3]  =  u[NY][i];
-			bufferbot_to_top[i][4]  = taus[NY][i];
-			bufferbot_to_top[i][5]  = taup[NY][i];
-	}
+    /* storage of bottom of local volume into buffer */
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = rho[NY][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = pi[NY][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = u[NY][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = taus[NY][i]; n++; } 
+        for ( i=1; i<NX+1; i++ ) { send_buf[n] = taup[NY][i]; n++; } 
 
+        MPI_Isend( send_buf, 10*NX, MPI_FLOAT, INDEX[3], TAG5, MPI_COMM_WORLD, &req[0] );
+        MPI_Irecv( recv_buf, 10*NX, MPI_FLOAT, INDEX[4], TAG5, MPI_COMM_WORLD, &req[1] );
+        MPI_Waitall( 2, req, stat );
 
- 	/*=========sending and receiving of the boundaries==========*/
+        n = 0;
+        for ( i=1; i<NX+1; i++ ) { rho[NY+1][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { pi[NY+1][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { u[NY+1][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { taus[NY+1][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { taup[NY+1][i] = recv_buf[n]; n++; }
 
-	MPI_Bsend(&buffertop_to_bot[1][1],NX*5,MPI_FLOAT,INDEX[3],TAG5,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Recv(&buffertop_to_bot[1][1],NX*5,MPI_FLOAT,INDEX[4],TAG5,MPI_COMM_WORLD,&status);
-	MPI_Bsend(&bufferbot_to_top[1][1],NX*5,MPI_FLOAT,INDEX[4],TAG6,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Recv(&bufferbot_to_top[1][1],NX*5,MPI_FLOAT,INDEX[3],TAG6,MPI_COMM_WORLD,&status);   
+        for ( i=1; i<NX+1; i++ ) { rho[0][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { pi[0][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { u[0][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { taus[0][i] = recv_buf[n]; n++; }
+        for ( i=1; i<NX+1; i++ ) { taup[0][i] = recv_buf[n]; n++; }
 
-	for (i=0;i<=NX+1;i++){
-			rho[NY+1][i] = 	buffertop_to_bot[i][1];
-			pi[NY+1][i] = 	buffertop_to_bot[i][2];
-			u[NY+1][i] = 	buffertop_to_bot[i][3];
-			taus[NY+1][i] = buffertop_to_bot[i][4];
-			taup[NY+1][i] = buffertop_to_bot[i][5];
-	}
+        send_buf = (float *)realloc( send_buf, 10*(NY+2)*sizeof(float) );
+        recv_buf = (float *)realloc( recv_buf, 10*(NY+2)*sizeof(float) );
 
-	for (i=0;i<=NX+1;i++){
-			rho[0][i] = 	bufferbot_to_top[i][1];
-			pi[0][i] = 	bufferbot_to_top[i][2];
-			u[0][i] = 	bufferbot_to_top[i][3];
-			taus[0][i] = 	bufferbot_to_top[i][4];
-			taup[0][i] = 	bufferbot_to_top[i][5];
-	}
+     /* storage of left edge of local volume into buffer */
+        n = 0;
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = rho[i][1]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = pi[i][1]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = u[i][1]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = taus[i][1]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = taup[i][1]; n++; }
 
-		for (j=0;j<=NY+1;j++)
-		{
-			/* storage of left edge of local volume into buffer */
-			bufferlef_to_rig[j][1] =  rho[j][1];
-			bufferlef_to_rig[j][2] =  pi[j][1];
-			bufferlef_to_rig[j][3] =  u[j][1];
-			bufferlef_to_rig[j][4] =  taus[j][1];
-			bufferlef_to_rig[j][5] =  taup[j][1];
-		}
+     /* storage of right edge of local volume into buffer */
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = rho[i][NX]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = pi[i][NX]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = u[i][NX]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = taus[i][NX]; n++; }
+        for ( i=0; i<NY+2; i++ ) { send_buf[n] = taup[i][NX]; n++; }
 
-	for (j=0;j<=NY+1;j++){
-			/* storage of right edge of local volume into buffer */
-			bufferrig_to_lef[j][1] =  rho[j][NX];
-			bufferrig_to_lef[j][2] =  pi[j][NX];
-			bufferrig_to_lef[j][3] =  u[j][NX];
-			bufferrig_to_lef[j][4] =  taus[j][NX];
-			bufferrig_to_lef[j][5] =  taup[j][NX];
-	}
+        MPI_Isend( send_buf, 10*(NY+2), MPI_FLOAT, INDEX[1], TAG1, MPI_COMM_WORLD, &req[0] );
+        MPI_Irecv( recv_buf, 10*(NY+2), MPI_FLOAT, INDEX[2], TAG1, MPI_COMM_WORLD, &req[0] );
+        MPI_Waitall( 2, req, stat );
 
- 	MPI_Bsend(&bufferlef_to_rig[0][1],(NY+2)*5,MPI_FLOAT,INDEX[1],TAG1,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Recv(&bufferlef_to_rig[0][1],(NY+2)*5,MPI_FLOAT,INDEX[2],TAG1,MPI_COMM_WORLD,&status);
-	MPI_Bsend(&bufferrig_to_lef[0][1],(NY+2)*5,MPI_FLOAT,INDEX[2],TAG2,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Recv(&bufferrig_to_lef[0][1],(NY+2)*5,MPI_FLOAT,INDEX[1],TAG2,MPI_COMM_WORLD,&status);
+        n = 0;
+        for ( i=0; i<NY+2; i++ ) { rho[i][NX+1] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { pi[i][NX+1] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { u[i][NX+1] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { taus[i][NX+1] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { taup[i][NX+1] = recv_buf[n]; n++; }
 
-	for (j=0;j<=NY+1;j++){
-			rho[j][NX+1] = 	bufferlef_to_rig[j][1];
-			pi[j][NX+1] = 	bufferlef_to_rig[j][2];
-			u[j][NX+1] = 	bufferlef_to_rig[j][3];
-			taus[j][NX+1] = bufferlef_to_rig[j][4];
-			taup[j][NX+1] = bufferlef_to_rig[j][5];
-	}
+        for ( i=0; i<NY+2; i++ ) { rho[i][0] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { pi[i][0] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { u[i][0] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { taus[i][0] = recv_buf[n]; n++; }
+        for ( i=0; i<NY+2; i++ ) { taup[i][0] = recv_buf[n]; n++; }
 
-	for (j=0;j<=NY+1;j++){
-			rho[j][0] = 	bufferrig_to_lef[j][1];
-			pi[j][0] = 	bufferrig_to_lef[j][2];
-			u[j][0] = 	bufferrig_to_lef[j][3];
-			taus[j][0] = 	bufferrig_to_lef[j][4];
-			taup[j][0] = 	bufferrig_to_lef[j][5];
-	}
-
-
-	free_matrix(bufferlef_to_rig,0,NY+1,1,5);
-	free_matrix(bufferrig_to_lef,0,NY+1,1,5);
-	free_matrix(buffertop_to_bot,0,NX+1,1,5);
-	free_matrix(bufferbot_to_top,0,NX+1,1,5);
+        free( send_buf );
+        free( recv_buf );
+        send_buf = NULL;
+        recv_buf = NULL;
         return;
 }
