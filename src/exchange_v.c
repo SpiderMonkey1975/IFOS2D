@@ -39,18 +39,13 @@ void exchange_v(float ** vx, float ** vy, float ** vz,
     
     fdo = FDORDER/2 + 1;
 
+    fdo3 = 2*fdo;
     switch (wavetyp_start) {
-        case 1:
-            fdo3 = 2*fdo;
-            break;
         case 2:
             fdo3 = 1*fdo;
             break;
         case 3:
             fdo3 = 3*fdo;
-            break;
-        default:
-            fdo3 = 2*fdo;
             break;
     }
     
@@ -58,85 +53,87 @@ void exchange_v(float ** vx, float ** vy, float ** vz,
     /* top - bottom */
     /* ************ */
     
-    if (POS[2]!=0)	/* no boundary exchange at top of global grid */
-        for (i=1;i<=NX;i++){
-            n = 1;
-            /* storage of top of local volume into buffer */
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<=fdo-1;l++) {
-                    buffertop_to_bot[i][n++]  =  vy[l][i];
-                }
-                for (l=1;l<=fdo;l++) {
-                    buffertop_to_bot[i][n++]  =  vx[l][i];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<=fdo;l++) {
-                    buffertop_to_bot[i][n++]  =  vz[l][i];
-                }
-            }
-        }
-    
-    if (POS[2]!=NPROCY-1)	/* no boundary exchange at bottom of global grid */
-        for (i=1;i<=NX;i++){
-            /* storage of bottom of local volume into buffer */
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<=fdo;l++) {
-                    bufferbot_to_top[i][n++]  =  vy[NY-l+1][i];
-                }
-                for (l=1;l<=fdo-1;l++) {
-                    bufferbot_to_top[i][n++]  =  vx[NY-l+1][i];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<=fdo-1;l++) {
-                    bufferbot_to_top[i][n++]  =  vz[NY-l+1][i];
-                }
-            }
-        }
-    
+    if (POS[2]!=0){	/* no boundary exchange at top of global grid */
+       if (WAVETYPE==1) {
+          for (i=1;i<=NX;i++){
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
+              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } }}
+
+       if (WAVETYPE==2) {
+          for (i=1;i<=NX;i++){
+              n = 1;
+              for (l=1;l<=fdo;l++) { buffertop_to_bot[i][n++] = vz[l][i]; } }}
+
+       if (WAVETYPE==3) {
+          for (i=1;i<=NX;i++){
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
+              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } 
+              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vz[l][i]; } }}}
+
+    if (POS[2]!=NPROCY-1){	/* no boundary exchange at bottom of global grid */
+       if (WAVETYPE==1) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo;l++) { bufferbot_to_top[i][n++] = vy[NY-l+1][i]; }
+              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vx[NY-l+1][i]; } }}
+
+       if (WAVETYPE==2) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vz[NY-l+1][i]; }}}
+
+       if (WAVETYPE==3) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
+              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } 
+              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vz[NY-l+1][i]; } }}}
+
+
     /* still blocking communication */
     MPI_Sendrecv_replace(&buffertop_to_bot[1][1],NX*fdo3,MPI_FLOAT,INDEX[3],TAG5,INDEX[4],TAG5,MPI_COMM_WORLD,&status);
     MPI_Sendrecv_replace(&bufferbot_to_top[1][1],NX*fdo3,MPI_FLOAT,INDEX[4],TAG6,INDEX[3],TAG6,MPI_COMM_WORLD,&status);
     
-    if (POS[2]!=NPROCY-1)	/* no boundary exchange at bottom of global grid */
-        for (i=1;i<=NX;i++){
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<=fdo-1;l++) {
-                    vy[NY+l][i] = buffertop_to_bot[i][n++];
-                }
-                for (l=1;l<=fdo;l++) {
-                    vx[NY+l][i] = buffertop_to_bot[i][n++];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<=fdo;l++) {
-                    vz[NY+l][i] = buffertop_to_bot[i][n++];
-                }
-            }
-        }
-    
-    if (POS[2]!=0)	/* no boundary exchange at top of global grid */
-        for (i=1;i<=NX;i++){
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<=fdo;l++) {
-                    vy[1-l][i] = bufferbot_to_top[i][n++];
-                }
-                for (l=1;l<=fdo-1;l++) {
-                    vx[1-l][i] = bufferbot_to_top[i][n++];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<=fdo-1;l++) {
-                    vz[1-l][i] = bufferbot_to_top[i][n++];
-                }
-            }
-        }
-    
-    
+    if (POS[2]!=NPROCY-1){	/* no boundary exchange at bottom of global grid */
+       if (WAVETYPE==1) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { vy[NY+l][i] = buffertop_to_bot[i][n++]; }
+              for (l=1;l<=fdo;l++) { vx[NY+l][i] = buffertop_to_bot[i][n++]; } }}
+
+       if (WAVETYPE==2) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo;l++) { vz[NY+l][i] = buffertop_to_bot[i][n++]; } }}
+
+       if (WAVETYPE==3) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { vy[NY+l][i] = buffertop_to_bot[i][n++]; }
+              for (l=1;l<=fdo;l++) { vx[NY+l][i] = buffertop_to_bot[i][n++]; } 
+              for (l=1;l<=fdo;l++) { vz[NY+l][i] = buffertop_to_bot[i][n++]; } }}}
+
+    if (POS[2]!=0){	/* no boundary exchange at top of global grid */
+       if (WAVETYPE==1) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo;l++) { vy[1-l][i] = bufferbot_to_top[i][n++]; }
+              for (l=1;l<=fdo-1;l++) { vx[1-l][i] = bufferbot_to_top[i][n++]; } }}
+
+       if (WAVETYPE==2) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo-1;l++) { vz[1-l][i] = bufferbot_to_top[i][n++]; } }}
+
+       if (WAVETYPE==3) {
+          for (i=1;i<=NX;i++) {
+              n = 1;
+              for (l=1;l<=fdo;l++) { vy[1-l][i] = bufferbot_to_top[i][n++]; }
+              for (l=1;l<=fdo-1;l++) { vx[1-l][i] = bufferbot_to_top[i][n++]; }
+              for (l=1;l<=fdo-1;l++) { vz[1-l][i] = bufferbot_to_top[i][n++]; } }}}
+
     /* ************ */
     /* left - right */
     /* ************ */

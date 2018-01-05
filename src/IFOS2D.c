@@ -2361,7 +2361,7 @@ int main(int argc, char **argv){
                                 
                                 /* interpolate unknown values */
                                 if((IDXI>1)||(IDYI>1)){
-                                    interpol(IDXI,IDYI,waveconv_shot,1);
+                                    interpol(IDXI,IDYI,waveconv_shot);
                                 }
                                 
                                 /* calculate complete gradient */
@@ -2404,7 +2404,7 @@ int main(int argc, char **argv){
                                 
                                 /* interpolate unknown values */
                                 if((IDXI>1)||(IDYI>1)){
-                                    interpol(IDXI,IDYI,waveconv_u_shot,1);
+                                    interpol(IDXI,IDYI,waveconv_u_shot);
                                 }
                                 
                                 /* calculate complete gradient */
@@ -2438,7 +2438,7 @@ int main(int argc, char **argv){
                                 
                                 /* interpolate unknown values */
                                 if((IDXI>1)||(IDYI>1)){
-                                    interpol(IDXI,IDYI,waveconv_u_shot_z,1);
+                                    interpol(IDXI,IDYI,waveconv_u_shot_z);
                                 }
                                 
                                 /* calculate complete gradient */
@@ -2469,7 +2469,7 @@ int main(int argc, char **argv){
                                 
                                 /* interpolate unknown values */
                                 if((IDXI>1)||(IDYI>1)){
-                                    interpol(IDXI,IDYI,waveconv_rho,1);
+                                    interpol(IDXI,IDYI,waveconv_rho);
                                 }
                                 
                                 /* calculate complete gradient */
@@ -2505,7 +2505,7 @@ int main(int argc, char **argv){
                                 
                                 /* interpolate unknown values */
                                 if((IDXI>1)||(IDYI>1)){
-                                    interpol(IDXI,IDYI,waveconv_rho_shot_z,1);
+                                    interpol(IDXI,IDYI,waveconv_rho_shot_z);
                                 }
                                 
                                 /* calculate complete gradient */

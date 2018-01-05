@@ -141,7 +141,7 @@ void info(FILE *fp);
 
 void initproc(void);
 
-void interpol(int ni1, int ni2, float **  intvar, int cfgt_check);
+void interpol(int ni1, int ni2, float **  intvar);
 
 double LU_decomp(double  **A, double *x, double *b,int n);
 

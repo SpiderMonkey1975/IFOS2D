@@ -22,36 +22,14 @@
 #include "fd.h"
 
 void write_matrix_disk(float ** gradient,char path_name[STRING_SIZE]){
+
     char joint[225];
     FILE *FPjoint;
-    extern int POS[3],MYID;
-    extern int IDX, IDY,NX,NY;
+    extern int POS[3], MYID, IDX, IDY, NX, NY;
     int i,j;
 
-#ifdef MPIIO
     sprintf(joint,"%s.bin",path_name);
     mergemod_par( joint, gradient );
-#else
-    sprintf(joint,"%s.bin.%i.%i",path_name,POS[1],POS[2]);
-    FPjoint=fopen(joint,"wb");
-    
-    for (i=1;i<=NX;i=i+IDX){
-    for (j=1;j<=NY;j=j+IDY){
-        fwrite(&gradient[j][i],sizeof(float),1,FPjoint);
-    }
-    }
-    
-    fclose(FPjoint);
-    
-    /* merge gradient file */
-    MPI_Barrier(MPI_COMM_WORLD);
-    sprintf(joint,"%s.bin",path_name);
-    if (MYID==0) { mergemod(joint,3); }
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    sprintf(joint,"%s.bin.%i.%i",path_name,POS[1],POS[2]);
-    remove(joint);
-#endif
 };
 
 /* Return global maximum of Matrix */
