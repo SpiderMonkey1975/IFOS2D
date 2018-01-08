@@ -25,204 +25,183 @@
 
 #include "fd.h"
 
-void exchange_v(float ** vx, float ** vy, float ** vz,
-                float ** bufferlef_to_rig, float ** bufferrig_to_lef,
-                float ** buffertop_to_bot, float ** bufferbot_to_top,
-                int wavetyp_start){
+void exchange_v( float ** vx, float ** vy, float ** vz ) {
     
-    extern int NX, NY, POS[3], NPROCX, NPROCY, BOUNDARY, FDORDER, WAVETYPE;
-    extern int INDEX[5];
+    extern int NX, NY, POS[3], NPROCX, NPROCY, BOUNDARY, FDORDER, WAVETYPE, INDEX[5];
     extern const int TAG1,TAG2,TAG5,TAG6;
-    MPI_Status  status;
-    int i, j, fdo, fdo3, n, l;
+    MPI_Status stat[4];
+    MPI_Request req[4];
+    int i, j, fdo, n, l, buf_size;
+    float *send_buf, *send_buf2, *recv_buf, *recv_buf2;
     
     fdo = FDORDER/2 + 1;
 
-    fdo3 = 2*fdo;
-    switch (wavetyp_start) {
+ /* Determine the maximum size of the send buffer needed for halo exchanges */
+    switch ( WAVETYPE ) {
+        case 1:
+            buf_size = NX*(2*fdo-1);
+            break;
         case 2:
-            fdo3 = 1*fdo;
+            buf_size = NX*fdo;
             break;
         case 3:
-            fdo3 = 3*fdo;
+            buf_size = NX*(3*fdo-1);
             break;
     }
-    
+   
+    send_buf  = (float *) malloc( buf_size*sizeof(float) );
+    send_buf2 = (float *) malloc( buf_size*sizeof(float) );
+    recv_buf  = (float *) malloc( buf_size*sizeof(float) );
+    recv_buf2 = (float *) malloc( buf_size*sizeof(float) );
+ 
     /* ************ */
     /* top - bottom */
     /* ************ */
     
     if (POS[2]!=0){	/* no boundary exchange at top of global grid */
-       if (WAVETYPE==1) {
-          for (i=1;i<=NX;i++){
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
-              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } }}
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for ( i=1; i<=NX; i++)   {
+          for ( l=1; l<=fdo-1;l++) { send_buf[n] = vy[l][i]; n++; }}
+          for ( i=1; i<=NX; i++)  {
+          for ( l=1; l<=fdo; l++) { send_buf[n] = vx[l][i]; n++; }} } 
 
-       if (WAVETYPE==2) {
-          for (i=1;i<=NX;i++){
-              n = 1;
-              for (l=1;l<=fdo;l++) { buffertop_to_bot[i][n++] = vz[l][i]; } }}
-
-       if (WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
-              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } 
-              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vz[l][i]; } }}}
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for ( i=1;i<=NX;i++ )  {
+          for ( l=1;l<=fdo;l++ ) { send_buf[n] = vz[l][i]; n++; }} }}
 
     if (POS[2]!=NPROCY-1){	/* no boundary exchange at bottom of global grid */
-       if (WAVETYPE==1) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo;l++) { bufferbot_to_top[i][n++] = vy[NY-l+1][i]; }
-              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vx[NY-l+1][i]; } }}
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for ( i=1;i<=NX;i++) {
+          for (l=1;l<=fdo;l++) { send_buf2[n] = vy[NY-l+1][i]; n++; }}
+          for ( i=1;i<=NX;i++)   {
+          for (l=1;l<=fdo-1;l++) { send_buf2[n] = vx[NY-l+1][i]; n++; }} }
 
-       if (WAVETYPE==2) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vz[NY-l+1][i]; }}}
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (i=1;i<=NX;i++)    {
+          for (l=1;l<=fdo-1;l++) { send_buf2[n] = vz[NY-l+1][i]; n++; }} }} 
 
-       if (WAVETYPE==3) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { buffertop_to_bot[i][n++] = vy[l][i]; }
-              for (l=1;l<=fdo;l++)   { buffertop_to_bot[i][n++] = vx[l][i]; } 
-              for (l=1;l<=fdo-1;l++) { bufferbot_to_top[i][n++] = vz[NY-l+1][i]; } }}}
+ /* non-blocking communication added */
+    MPI_Isend( send_buf, buf_size, MPI_FLOAT, INDEX[3], TAG5, MPI_COMM_WORLD, &req[0] );
+    MPI_Irecv( recv_buf, buf_size, MPI_FLOAT, INDEX[4], TAG5, MPI_COMM_WORLD, &req[1] );
+    MPI_Isend( send_buf2, buf_size, MPI_FLOAT, INDEX[4], TAG6, MPI_COMM_WORLD, &req[2] );
+    MPI_Irecv( recv_buf2, buf_size, MPI_FLOAT, INDEX[3], TAG6, MPI_COMM_WORLD, &req[3] );
+    MPI_Waitall( 4, req, stat );  
 
-
-    /* still blocking communication */
-    MPI_Sendrecv_replace(&buffertop_to_bot[1][1],NX*fdo3,MPI_FLOAT,INDEX[3],TAG5,INDEX[4],TAG5,MPI_COMM_WORLD,&status);
-    MPI_Sendrecv_replace(&bufferbot_to_top[1][1],NX*fdo3,MPI_FLOAT,INDEX[4],TAG6,INDEX[3],TAG6,MPI_COMM_WORLD,&status);
-    
     if (POS[2]!=NPROCY-1){	/* no boundary exchange at bottom of global grid */
-       if (WAVETYPE==1) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { vy[NY+l][i] = buffertop_to_bot[i][n++]; }
-              for (l=1;l<=fdo;l++) { vx[NY+l][i] = buffertop_to_bot[i][n++]; } }}
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for (i=1;i<=NX;i++)    {
+          for (l=1;l<=fdo-1;l++) { vy[NY+l][i] = recv_buf[n]; n++; }}
+          for (i=1;i<=NX;i++)  {
+          for (l=1;l<=fdo;l++) { vx[NY+l][i] = recv_buf[n]; n++; }} }
 
-       if (WAVETYPE==2) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo;l++) { vz[NY+l][i] = buffertop_to_bot[i][n++]; } }}
-
-       if (WAVETYPE==3) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { vy[NY+l][i] = buffertop_to_bot[i][n++]; }
-              for (l=1;l<=fdo;l++) { vx[NY+l][i] = buffertop_to_bot[i][n++]; } 
-              for (l=1;l<=fdo;l++) { vz[NY+l][i] = buffertop_to_bot[i][n++]; } }}}
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (i=1;i<=NX;i++)  {
+          for (l=1;l<=fdo;l++) { vz[NY+l][i] = recv_buf[n]; n++; }} }}
 
     if (POS[2]!=0){	/* no boundary exchange at top of global grid */
-       if (WAVETYPE==1) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo;l++) { vy[1-l][i] = bufferbot_to_top[i][n++]; }
-              for (l=1;l<=fdo-1;l++) { vx[1-l][i] = bufferbot_to_top[i][n++]; } }}
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for (i=1;i<=NX;i++)  { 
+          for (l=1;l<=fdo;l++) { vy[1-l][i] = recv_buf2[n]; n++; }}
+          for (i=1;i<=NX;i++)    {
+          for (l=1;l<=fdo-1;l++) { vx[1-l][i] = recv_buf2[n]; n++; }} }
 
-       if (WAVETYPE==2) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo-1;l++) { vz[1-l][i] = bufferbot_to_top[i][n++]; } }}
-
-       if (WAVETYPE==3) {
-          for (i=1;i<=NX;i++) {
-              n = 1;
-              for (l=1;l<=fdo;l++) { vy[1-l][i] = bufferbot_to_top[i][n++]; }
-              for (l=1;l<=fdo-1;l++) { vx[1-l][i] = bufferbot_to_top[i][n++]; }
-              for (l=1;l<=fdo-1;l++) { vz[1-l][i] = bufferbot_to_top[i][n++]; } }}}
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (i=1;i<=NX;i++)    {
+          for (l=1;l<=fdo-1;l++) { vz[1-l][i] = recv_buf2[n]; n++;}} }}
 
     /* ************ */
     /* left - right */
     /* ************ */
     
-    /* exchange if periodic boundary condition is applied */
-    if ((BOUNDARY) || (POS[1]!=0))
-        for (j=1;j<=NY;j++){
-            /* storage of left edge of local volume into buffer */
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<fdo;l++) {
-                    bufferlef_to_rig[j][n++] =  vy[j][l];
-                }
-                for (l=1;l<fdo-1;l++) {
-                    bufferlef_to_rig[j][n++] =  vx[j][l];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<fdo;l++) {
-                    bufferlef_to_rig[j][n++] =  vz[j][l];
-                }
-            }
-        }
-    /* no exchange if periodic boundary condition is applied */
-    if ((BOUNDARY) || (POS[1]!=NPROCX-1))	/* no boundary exchange at right edge of global grid */
-        for (j=1;j<=NY;j++){
-            /* storage of right edge of local volume into buffer */
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<fdo-1;l++) {
-                    bufferrig_to_lef[j][n++] =  vy[j][NX-l+1];
-                }
-                for (l=1;l<fdo;l++) {
-                    bufferrig_to_lef[j][n++] =  vx[j][NX-l+1];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<fdo-1;l++) {
-                    bufferrig_to_lef[j][n++] =  vz[j][NX-l+1];
-                }
-            }
-        }
-    
-    /* send and reveive values for points at inner boundaries */
-    
-    /* alternative communication */
-    /* still blocking communication */
-    MPI_Sendrecv_replace(&bufferlef_to_rig[1][1],NY*fdo3,MPI_FLOAT,INDEX[1],TAG1,INDEX[2],TAG1,MPI_COMM_WORLD,&status);
-    MPI_Sendrecv_replace(&bufferrig_to_lef[1][1],NY*fdo3,MPI_FLOAT,INDEX[2],TAG2,INDEX[1],TAG2,MPI_COMM_WORLD,&status);
-    
-    
-    /* no exchange if periodic boundary condition is applied */
-    if ((BOUNDARY) || (POS[1]!=NPROCX-1))	/* no boundary exchange at right edge of global grid */
-        for (j=1;j<=NY;j++){
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<fdo;l++) {
-                    vy[j][NX+l] = bufferlef_to_rig[j][n++];
-                }
-                for (l=1;l<fdo-1;l++) {
-                    vx[j][NX+l] = bufferlef_to_rig[j][n++];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<fdo;l++) {
-                    vz[j][NX+l] = bufferlef_to_rig[j][n++];
-                }
-            }
-        }
-    
-    /* no exchange if periodic boundary condition is applied */
-    if ((BOUNDARY) || (POS[1]!=0))	/* no boundary exchange at left edge of global grid */
-        for (j=1;j<=NY;j++){
-            n = 1;
-            if (WAVETYPE==1 || WAVETYPE==3) {
-                for (l=1;l<fdo-1;l++) {
-                    vy[j][1-l] = bufferrig_to_lef[j][n++];
-                }
-                for (l=1;l<fdo;l++) {
-                    vx[j][1-l] = bufferrig_to_lef[j][n++];
-                }
-            }
-            if(WAVETYPE==2 || WAVETYPE==3) {
-                for (l=1;l<fdo-1;l++) {
-                    vz[j][1-l] = bufferrig_to_lef[j][n++];
-                }
-            }
-        }
-    
-    
+ /* Determine the maximum size of the send buffer needed for halo exchanges */
+    switch ( WAVETYPE ) {
+        case 1:
+            buf_size = NY*(2*fdo-1);
+            break;
+        case 2:
+            buf_size = NY*fdo;
+            break;
+        case 3:
+            buf_size = NY*(3*fdo-1);
+            break;
+    }
+   
+    send_buf  = (float *) realloc( send_buf, buf_size*sizeof(float) );
+    send_buf2 = (float *) realloc( send_buf2, buf_size*sizeof(float) );
+    recv_buf  = (float *) realloc( recv_buf, buf_size*sizeof(float) );
+    recv_buf2 = (float *) realloc( recv_buf2, buf_size*sizeof(float) );
 
+    /* exchange if periodic boundary condition is applied */
+    if ((BOUNDARY) || (POS[1]!=0)) {
+       n = 0;
+       if (WAVETYPE==1 || WAVETYPE==3) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { send_buf[n] = vy[j][l]; n++; }}
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo-1;l++) { send_buf[n] = vx[j][l]; n++; }} }
+
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { send_buf[n] = vz[j][l]; n++; }} }}
+
+    /* no exchange if periodic boundary condition is applied */
+    if ((BOUNDARY) || (POS[1]!=NPROCX-1)) {	/* no boundary exchange at right edge of global grid */
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++)   {
+          for (l=1;l<fdo-1;l++) { send_buf2[n] = vy[j][NX-l+1]; n++; }}
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { send_buf2[n] = vx[j][NX-l+1]; n++; }} }
+
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo-1;l++) { send_buf2[n] = vz[j][NX-l+1]; n++; }} }}
+       
+ /* non-blocking communication added */
+    MPI_Isend( send_buf, buf_size, MPI_FLOAT, INDEX[1], TAG1, MPI_COMM_WORLD, &req[0] );
+    MPI_Irecv( recv_buf, buf_size, MPI_FLOAT, INDEX[2], TAG1, MPI_COMM_WORLD, &req[1] );
+    MPI_Isend( send_buf2, buf_size, MPI_FLOAT, INDEX[2], TAG2, MPI_COMM_WORLD, &req[2] );
+    MPI_Irecv( recv_buf2, buf_size, MPI_FLOAT, INDEX[1], TAG2, MPI_COMM_WORLD, &req[3] );
+    MPI_Waitall( 4, req, stat );  
+  
+    /* no exchange if periodic boundary condition is applied */
+    if ((BOUNDARY) || (POS[1]!=NPROCX-1)) {	/* no boundary exchange at right edge of global grid */
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { vy[j][NX+l] = recv_buf[n]; n++; }}
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo-1;l++) { vx[j][NX+l] = recv_buf[n]; n++; }} }
+                
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { vz[j][NX+l] = recv_buf[n]; n++; }} }}
+    
+    /* no exchange if periodic boundary condition is applied */
+    if ((BOUNDARY) || (POS[1]!=0)) {	/* no boundary exchange at left edge of global grid */
+       n = 0;
+       if ( WAVETYPE==1 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++)   {
+          for (l=1;l<fdo-1;l++) { vy[j][1-l] = recv_buf2[n]; n++; }}
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo;l++) { vx[j][1-l] = recv_buf2[n]; n++; }} }
+            
+       if ( WAVETYPE==2 || WAVETYPE==3 ) {
+          for (j=1;j<=NY;j++) {
+          for (l=1;l<fdo-1;l++) { vz[j][1-l] = recv_buf2[n]; n++; }} }}
+
+    free( send_buf );
+    free( send_buf2 );
+    free( recv_buf );
+    free( recv_buf2 );
+    send_buf = NULL;
+    send_buf2 = NULL;
+    recv_buf = NULL;
+    recv_buf2 = NULL;
+    return;
 }
 

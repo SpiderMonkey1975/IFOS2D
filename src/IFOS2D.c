@@ -1234,7 +1234,7 @@ int main(int argc, char **argv){
                                 }
                                 
                                 /* exchange of particle velocities between PEs */
-                                exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
+                                exchange_v(pvx,pvy,pvz);
                                 
                                 if (MYID==0){
                                     time5=MPI_Wtime();
@@ -1677,7 +1677,7 @@ int main(int argc, char **argv){
                             }
                             
                             /* exchange of particle velocities between PEs */
-                            exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
+                            exchange_v(pvx,pvy,pvz);
                             
                             if (MYID==0){
                                 time5=MPI_Wtime();
@@ -2183,7 +2183,7 @@ int main(int argc, char **argv){
                                     }
                                     
                                     /* exchange of particle velocities between PEs */
-                                    exchange_v(pvx,pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
+                                    exchange_v(pvx,pvy,pvz);
                                     
                                     if (MYID==0){
                                         time5=MPI_Wtime();
@@ -3399,7 +3399,7 @@ int main(int argc, char **argv){
                             }
                             
                             /* exchange of particle velocities between PEs */
-                            exchange_v(pvx, pvy,pvz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, wavetype_start);
+                            exchange_v(pvx, pvy,pvz);
                             
                             if (MYID==0){
                                 time5=MPI_Wtime();

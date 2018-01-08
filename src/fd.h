@@ -109,10 +109,7 @@ void exchange_rsg_4th(float ** vx, float ** vy, float ** vz,
                       float ** bufferlef_to_rig, float ** bufferrig_to_lef,
                       float ** buffertop_to_bot, float ** bufferbot_to_top);
 
-void exchange_v(float ** vx, float ** vy, float ** vz,
-                float ** bufferlef_to_rig, float ** bufferrig_to_lef,
-                float ** buffertop_to_bot, float ** bufferbot_to_top,
-                int wavetyp_start);
+void exchange_v(float ** vx, float ** vy, float ** vz );
 
 void exchange_s(float ** sxx, float ** syy,
                 float ** sxy,float ** sxz,float ** syz, float ** bufferlef_to_rig, float ** bufferrig_to_lef,
