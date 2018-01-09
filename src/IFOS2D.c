@@ -38,16 +38,12 @@ int main(int argc, char **argv){
     int ntr=0, ntr_loc=0, ntr_glob=0, nsrc=0, nsrc_loc=0, nsrc_glob=0, ishot, irec, nshots=0, nshots1, Lcount, itest, itestshot;
     
     float muss, lamss;
-    float memdyn, memmodel, memseismograms, membuffer, memtotal, eps_scale;
+    float eps_scale;
     float fac1, fac2;
     float opteps_vp, opteps_vs, opteps_rho, Vp_avg, C_vp, Vs_avg, C_vs, rho_avg, C_rho;
     float memfwt, memfwt1, memfwtdata;
     char *buff_addr, ext[10], *fileinp;
     char jac[225];
-    
-    double time1, time2, time3, time4, time5, time6, time7, time8,
-    time_av_v_update=0.0, time_av_s_update=0.0, time_av_v_exchange=0.0,
-    time_av_s_exchange=0.0, time_av_timestep=0.0;
     
     float L2, L2sum, L2_all_shots, L2sum_all_shots, *L2t, alphanom, alphadenom;
     int sum_killed_traces=0, sum_killed_traces_testshots=0, killed_traces=0, killed_traces_testshots=0;
@@ -78,8 +74,6 @@ int main(int argc, char **argv){
     int   ** recpos=NULL, ** recpos_loc=NULL;
     /*int   ** tracekill=NULL, TRKILL, DTRKILL;*/
     int * DTINV_help;
-    
-    float ** bufferlef_to_rig,  ** bufferrig_to_lef, ** buffertop_to_bot, ** bufferbot_to_top;
     
     /* PML variables */
     float * d_x, * K_x, * alpha_prime_x, * a_x, * b_x, * d_x_half, * K_x_half, * alpha_prime_x_half, * a_x_half, * b_x_half, * d_y, * K_y, * alpha_prime_y, * a_y, * b_y, * d_y_half, * K_y_half, * alpha_prime_y_half, * a_y_half, * b_y_half;
@@ -169,20 +163,12 @@ int main(int argc, char **argv){
     /* General parameters */
     int nt_out;
     
-    MPI_Request *req_send, *req_rec;
-    MPI_Status  *send_statuses, *rec_statuses;
-    
     /* Initialize MPI environment */
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD,&NP);
     MPI_Comm_rank(MPI_COMM_WORLD,&MYID);
     
     setvbuf(stdout, NULL, _IONBF, 0);
-    
-    if (MYID == 0){
-        time1=MPI_Wtime();
-        clock();
-    }
     
     /* print program name, version etc to stdout*/
     if (MYID == 0) info(stdout);
@@ -226,7 +212,6 @@ int main(int argc, char **argv){
     initproc();
     
     NT=iround(TIME/DT);  	  /* number of timesteps */
-    /*ns=iround(NT/NDT);*/           /* number of samples per trace */
     ns=NT;	/* in a FWI one has to keep all samples of the forward modeled data
              at the receiver positions to calculate the adjoint sources and to do
              the backpropagation; look at function saveseis_glob.c to see that every
@@ -312,52 +297,6 @@ int main(int argc, char **argv){
             fdo3 = 2*nd;
             break;
     }
-    
-    
-//    if (L){
-//        memdyn=(5.0+3.0*(float)L)*fac1*fac2;
-//        memmodel=(12.0+3.0*(float)L)*fac1*fac2;
-//        
-//    } else {
-//        memdyn=5.0*fac1*fac2;
-//        memmodel=6.0*fac1*fac2;
-//    }
-//    memseismograms=nseismograms*ntr*ns*fac2;
-    
-//    memfwt=5.0*((NX/IDXI)+FDORDER)*((NY/IDYI)+FDORDER)*NTDTINV*fac2;
-//    memfwt1=20.0*NX*NY*fac2;
-//    memfwtdata=6.0*ntr*ns*fac2;
-    
-//    membuffer=2.0*fdo3*(NY+NX)*fac2;
-//    buffsize=2.0*2.0*fdo3*(NX+NY)*sizeof(MPI_FLOAT);
-//    memtotal=memdyn+memmodel+memseismograms+memfwt+memfwt1+memfwtdata+membuffer+(buffsize*pow(2.0,-20.0));
-    
-    
-//    if (MYID==0 && WAVETYPE == 1){
-//        fprintf(FP,"\n **Message from main (printed by PE %d):\n",MYID);
-//        fprintf(FP," Size of local grids: NX=%d \t NY=%d\n",NX,NY);
-//        fprintf(FP," Each process is now trying to allocate memory for:\n");
-//        fprintf(FP," Dynamic variables: \t\t %6.2f MB\n", memdyn);
-//        fprintf(FP," Static variables: \t\t %6.2f MB\n", memmodel);
-//        fprintf(FP," Seismograms: \t\t\t %6.2f MB\n", memseismograms);
-//        fprintf(FP," Buffer arrays for grid exchange:%6.2f MB\n", membuffer);
-//        fprintf(FP," Network Buffer for MPI_Bsend: \t %6.2f MB\n", buffsize*pow(2.0,-20.0));
-//        fprintf(FP," ------------------------------------------------ \n");
-//        fprintf(FP," Total memory required: \t %6.2f MB.\n\n", memtotal);
-//    }
-    
-    
-    /* allocate buffer for buffering messages */
-//    buff_addr=malloc(buffsize);
-//    if (!buff_addr) declare_error("allocation failure for buffer for MPI_Bsend !");
-//    MPI_Buffer_attach(buff_addr,buffsize);
-    
-    /* allocation for request and status arrays */
-    req_send=(MPI_Request *)malloc(REQUEST_COUNT*sizeof(MPI_Request));
-    req_rec=(MPI_Request *)malloc(REQUEST_COUNT*sizeof(MPI_Request));
-    send_statuses=(MPI_Status *)malloc(REQUEST_COUNT*sizeof(MPI_Status));
-    rec_statuses=(MPI_Status *)malloc(REQUEST_COUNT*sizeof(MPI_Status));
-    
     
     /* memory allocation for dynamic (wavefield) arrays */
     if(!ACOUSTIC){
@@ -637,14 +576,6 @@ int main(int argc, char **argv){
     
     taper_coeff=  matrix(1,NY,1,NX);
     
-    
-    /* memory allocation for buffer arrays in which the wavefield
-     information which is exchanged between neighbouring PEs is stored */
-    bufferlef_to_rig = matrix(1,NY,1,fdo3);
-    bufferrig_to_lef = matrix(1,NY,1,fdo3);
-    buffertop_to_bot = matrix(1,NX,1,fdo3);
-    bufferbot_to_top = matrix(1,NX,1,fdo3);
-    
     /* Allocate memory to save full seismograms */
     switch (SEISMO){
         case 1 : /* particle velocities only */
@@ -872,7 +803,6 @@ int main(int argc, char **argv){
         }
         
         if (MYID==0){
-            time2=MPI_Wtime();
             fprintf(FP,"\n\n\n ------------------------------------------------------------------\n");
             if(FORWARD_ONLY==0) {
                 fprintf(FP,"\n\n\n                   TDFWI ITERATION %d \t of %d \n",iter,ITERMAX);
@@ -1208,11 +1138,6 @@ int main(int argc, char **argv){
                                     }
                                 }
                                 
-                                if (MYID==0){
-                                    if (infoout)  fprintf(FP,"\n Computing timestep %d of %d \n",nt,NT);
-                                    time3=MPI_Wtime();
-                                }
-                                
                                 /* update of particle velocities */
                                 if(!ACOUSTIC) {
                                     if (WAVETYPE==1 || WAVETYPE==3) {
@@ -1226,21 +1151,8 @@ int main(int argc, char **argv){
                                     update_v_acoustic_PML(1, NX, 1, NY, nt, pvx, pvxp1, pvxm1, pvy, pvyp1, pvym1, psp, prip, prjp, srcpos_loc,signals,signals,nsrc_loc,absorb_coeff,hc,infoout,0, K_x_half, a_x_half, b_x_half, K_y_half, a_y_half, b_y_half, psi_sxx_x, psi_syy_y);
                                 }
 
-                                
-                                if (MYID==0){
-                                    time4=MPI_Wtime();
-                                    time_av_v_update+=(time4-time3);
-                                    if (infoout)  fprintf(FP," particle velocity exchange between PEs ...");
-                                }
-                                
                                 /* exchange of particle velocities between PEs */
                                 exchange_v(pvx,pvy,pvz);
-                                
-                                if (MYID==0){
-                                    time5=MPI_Wtime();
-                                    time_av_v_exchange+=(time5-time4);
-                                    if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time5-time4);
-                                }
                                 
                                 if (L) {   /* viscoelastic */
                                     if (WAVETYPE==1 || WAVETYPE==3) {
@@ -1287,35 +1199,16 @@ int main(int argc, char **argv){
                                     }
                                 }
                                 
-                                if (MYID==0){
-                                    time6=MPI_Wtime();
-                                    time_av_s_update+=(time6-time5);
-                                    if (infoout)  fprintf(FP," stress exchange between PEs ...");
-                                }
-                                
-                                
                                 /* stress exchange between PEs */
                                 if(!ACOUSTIC)
-                                    exchange_s(psxx,psyy,psxy,psxz,psyz,bufferlef_to_rig, bufferrig_to_lef,buffertop_to_bot, bufferbot_to_top,req_send, req_rec,wavetype_start);
+                                    exchange_s(psxx,psyy,psxy,psxz,psyz);
                                 else
-                                    exchange_p(psp,bufferlef_to_rig, bufferrig_to_lef,buffertop_to_bot, bufferbot_to_top,req_send, req_rec);
-                                
-                                if (MYID==0){
-                                    time7=MPI_Wtime();
-                                    time_av_s_exchange+=(time7-time6);
-                                    if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time7-time6);
-                                }
+                                    exchange_p(psp);
                                 
                                 /* store amplitudes at receivers in section-arrays */
                                 if (SEISMO){
                                     seismo_ssg(nt, ntr, recpos_loc, sectionvx, sectionvy,sectionvz,sectionp, sectioncurl, sectiondiv,pvx, pvy,pvz, psxx, psyy, psp, ppi, pu, hc);
                                     /*lsamp+=NDT;*/
-                                }
-                                
-                                if (MYID==0){
-                                    time8=MPI_Wtime();
-                                    time_av_timestep+=(time8-time3);
-                                    if (infoout)  fprintf(FP," total real time for timestep %d : %4.2f s.\n",nt,time8-time3);
                                 }
                                 
                             }
@@ -1649,14 +1542,6 @@ int main(int argc, char **argv){
                                 }
                             }
                             
-                            
-                            
-                            if (MYID==0){
-                                if (infoout)  fprintf(FP,"\n Computing timestep %d of %d \n",nt,NT);
-                                time3=MPI_Wtime();
-                            }
-                            
-                            
                             /* update of particle velocities */
                             if(!ACOUSTIC) {
                                 if (WAVETYPE==1 || WAVETYPE==3) {
@@ -1670,20 +1555,8 @@ int main(int argc, char **argv){
                                 update_v_acoustic_PML(1, NX, 1, NY, nt, pvx, pvxp1, pvxm1, pvy, pvyp1, pvym1, psp, prip, prjp, srcpos_loc,signals,signals,nsrc_loc,absorb_coeff,hc,infoout,0, K_x_half, a_x_half, b_x_half, K_y_half, a_y_half, b_y_half, psi_sxx_x, psi_syy_y);
                             }
                             
-                            if (MYID==0){
-                                time4=MPI_Wtime();
-                                time_av_v_update+=(time4-time3);
-                                if (infoout)  fprintf(FP," particle velocity exchange between PEs ...");
-                            }
-                            
                             /* exchange of particle velocities between PEs */
                             exchange_v(pvx,pvy,pvz);
-                            
-                            if (MYID==0){
-                                time5=MPI_Wtime();
-                                time_av_v_exchange+=(time5-time4);
-                                if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time5-time4);
-                            }
                             
                             if (L) {   /* viscoelastic */
                                 if (WAVETYPE==1 || WAVETYPE==3) {
@@ -1731,24 +1604,11 @@ int main(int argc, char **argv){
                                 }
                             }
                             
-                            if (MYID==0){
-                                time6=MPI_Wtime();
-                                time_av_s_update+=(time6-time5);
-                                if (infoout)  fprintf(FP," stress exchange between PEs ...");
-                            }
-                            
                             /* stress exchange between PEs */
                             if(!ACOUSTIC)
-                                exchange_s(psxx,psyy,psxy,psxz,psyz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                                exchange_s(psxx,psyy,psxy,psxz,psyz);
                             else
-                                exchange_p(psp,bufferlef_to_rig, bufferrig_to_lef,buffertop_to_bot, bufferbot_to_top,req_send, req_rec);
-                            
-                            
-                            if (MYID==0){
-                                time7=MPI_Wtime();
-                                time_av_s_exchange+=(time7-time6);
-                                if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time7-time6);
-                            }
+                                exchange_p(psp);
                             
                             /* store amplitudes at receivers in section-arrays */
                             if (SEISMO){
@@ -1841,14 +1701,6 @@ int main(int argc, char **argv){
                                 if(WAVETYPE==2||WAVETYPE==3) snap_SH(FP,nt,nsnap,pvz,pu,ppi,hc,ishot);
                                 lsnap=lsnap+iround(TSNAPINC/DT);
                             }
-                            
-                            
-                            if (MYID==0){
-                                time8=MPI_Wtime();
-                                time_av_timestep+=(time8-time3);
-                                if (infoout)  fprintf(FP," total real time for timestep %d : %4.2f s.\n",nt,time8-time3);
-                            }
-                            
                             
                         }
 
@@ -2157,11 +2009,6 @@ int main(int argc, char **argv){
                                         }
                                     }
                                     
-                                    if (MYID==0){
-                                        if (infoout)  fprintf(FP,"\n Computing timestep %d of %d \n",nt,NT);
-                                        time3=MPI_Wtime();
-                                    }
-                                    
                                     /* update of particle velocities */
                                     if(!ACOUSTIC) {
                                         if (WAVETYPE==1 || WAVETYPE==3) {
@@ -2175,21 +2022,8 @@ int main(int argc, char **argv){
                                         update_v_acoustic_PML(1, NX, 1, NY, nt, pvx, pvxp1, pvxm1, pvy, pvyp1, pvym1, psp, prip, prjp, srcpos_loc_back, sectionvxdiff,sectionvydiff,ntr1,absorb_coeff,hc,infoout,1, K_x_half, a_x_half, b_x_half, K_y_half, a_y_half, b_y_half, psi_sxx_x, psi_syy_y);
                                     }
                                     
-                                    
-                                    if (MYID==0){
-                                        time4=MPI_Wtime();
-                                        time_av_v_update+=(time4-time3);
-                                        if (infoout)  fprintf(FP," particle velocity exchange between PEs ...");
-                                    }
-                                    
                                     /* exchange of particle velocities between PEs */
                                     exchange_v(pvx,pvy,pvz);
-                                    
-                                    if (MYID==0){
-                                        time5=MPI_Wtime();
-                                        time_av_v_exchange+=(time5-time4);
-                                        if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time5-time4);
-                                    }
                                     
                                     if (L) {
                                         /* viscoelastic */
@@ -2237,27 +2071,11 @@ int main(int argc, char **argv){
                                         }
                                     }
                                     
-                                    if (MYID==0){
-                                        time6=MPI_Wtime();
-                                        time_av_s_update+=(time6-time5);
-                                        if (infoout)  fprintf(FP," stress exchange between PEs ...");
-                                    }
-                                    
                                     /* stress exchange between PEs */
                                     if(!ACOUSTIC)
-                                        exchange_s(psxx,psyy,psxy,psxz,psyz, bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                                        exchange_s(psxx,psyy,psxy,psxz,psyz);
                                     else
-                                        exchange_p(psp,bufferlef_to_rig, bufferrig_to_lef,buffertop_to_bot, bufferbot_to_top,req_send, req_rec);
-                                    
-                                    
-                                    if (MYID==0){
-                                        time7=MPI_Wtime();
-                                        time_av_s_exchange+=(time7-time6);
-                                        if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time7-time6);
-                                    }
-                                    
-                                    
-                                    /*if(nt==hin1){*/
+                                        exchange_p(psp);
                                     
                                     /*-------------------------------------------------*/
                                     /* Calculate convolution for every DTINV time step */
@@ -2312,12 +2130,6 @@ int main(int argc, char **argv){
                                     if ((SNAP) && (nt==lsnap) && (nt<=TSNAP2/DT)){
                                         snap(FP,nt,++nsnap,pvx,pvy,psxx,psyy,psp,pu,ppi,hc,ishot);
                                         lsnap=lsnap+iround(TSNAPINC/DT);
-                                    }
-                                    
-                                    if (MYID==0){
-                                        time8=MPI_Wtime();
-                                        time_av_timestep+=(time8-time3);
-                                        if (infoout)  fprintf(FP," total real time for timestep %d : %4.2f s.\n",nt,time8-time3);
                                     }
                                     
                                 }
@@ -3374,11 +3186,6 @@ int main(int argc, char **argv){
                                 }
                             }
                             
-                            if (MYID==0){
-                                if (infoout)  fprintf(FP,"\n Computing timestep %d of %d \n",nt,NT);
-                                time3=MPI_Wtime();
-                            }
-                            
                             /* update of particle velocities */
                             if(!ACOUSTIC) {
                                 if (WAVETYPE==1 || WAVETYPE==3) {
@@ -3392,20 +3199,8 @@ int main(int argc, char **argv){
                             else
                                 update_v_acoustic_PML(1, NX, 1, NY, nt, pvx, pvxp1, pvxm1, pvy, pvyp1, pvym1, psp, prip, prjp, srcpos_loc,signals,signals,nsrc_loc,absorb_coeff,hc,infoout,0, K_x_half, a_x_half, b_x_half, K_y_half, a_y_half, b_y_half, psi_sxx_x, psi_syy_y);
                             
-                            if (MYID==0){
-                                time4=MPI_Wtime();
-                                time_av_v_update+=(time4-time3);
-                                if (infoout)  fprintf(FP," particle velocity exchange between PEs ...");
-                            }
-                            
                             /* exchange of particle velocities between PEs */
                             exchange_v(pvx, pvy,pvz);
-                            
-                            if (MYID==0){
-                                time5=MPI_Wtime();
-                                time_av_v_exchange+=(time5-time4);
-                                if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time5-time4);
-                            }
                             
                             if (L) {   /* viscoelastic */
                                 if (WAVETYPE==1 || WAVETYPE==3) {
@@ -3431,12 +3226,6 @@ int main(int argc, char **argv){
                                     update_p_PML(1, NX, 1, NY, pvx, pvy, psp, u, ppinp1, absorb_coeff, prhonp1, hc, infoout, K_x, a_x, b_x, K_x_half, a_x_half, b_x_half, K_y, a_y, b_y, K_y_half, a_y_half, b_y_half, psi_vxx, psi_vyy, psi_vxy, psi_vyx);
                             }
                             
-                            if (MYID==0){
-                                time6=MPI_Wtime();
-                                time_av_s_update+=(time6-time5);
-                                if (infoout)  fprintf(FP," stress exchange between PEs ...");
-                            }
-                            
                             /* explosive source */
                             if ((SOURCE_TYPE==1))
                                 psource(nt,psxx,psyy,psp,srcpos_loc,signals,nsrc_loc,0);
@@ -3459,27 +3248,13 @@ int main(int argc, char **argv){
                             
                             /* stress exchange between PEs */
                             if(!ACOUSTIC)
-                                exchange_s(psxx,psyy,psxy,psxz,psyz,bufferlef_to_rig, bufferrig_to_lef, buffertop_to_bot, bufferbot_to_top, req_send, req_rec,wavetype_start);
+                                exchange_s(psxx,psyy,psxy,psxz,psyz);
                             else
-                                exchange_p(psp,bufferlef_to_rig, bufferrig_to_lef,buffertop_to_bot, bufferbot_to_top,req_send, req_rec);
-                            
-                            if (MYID==0){
-                                time7=MPI_Wtime();
-                                time_av_s_exchange+=(time7-time6);
-                                if (infoout)  fprintf(FP," finished (real time: %4.2f s).\n",time7-time6);
-                            }
+                                exchange_p(psp);
                             
                             /* store amplitudes at receivers in section-arrays */
                             if (SEISMO){
                                 seismo_ssg(nt, ntr, recpos_loc, sectionvx, sectionvy,sectionvz, sectionp, sectioncurl, sectiondiv, pvx, pvy,pvz, psxx, psyy, psp, ppinp1, punp1, hc);
-                                /*lsamp+=NDT;*/
-                            }
-                            
-                            
-                            if (MYID==0){
-                                time8=MPI_Wtime();
-                                time_av_timestep+=(time8-time3);
-                                if (infoout)  fprintf(FP," total real time for timestep %d : %4.2f s.\n",nt,time8-time3);
                             }
                             
                         }
@@ -3856,26 +3631,6 @@ int main(int argc, char **argv){
             nfstart_jac = nfstart_jac + nf_jac;
         }
         
-        if (MYID==0&&VERBOSE){
-            fprintf(FP,"\n **Info from main (written by PE %d): \n",MYID);
-            fprintf(FP," CPU time of program per PE: %li seconds.\n",clock()/CLOCKS_PER_SEC);
-            time8=MPI_Wtime();
-            fprintf(FP," Total real time of program: %4.2f seconds.\n",time8-time1);
-            time_av_v_update=time_av_v_update/(double)NT;
-            time_av_s_update=time_av_s_update/(double)NT;
-            time_av_v_exchange=time_av_v_exchange/(double)NT;
-            time_av_s_exchange=time_av_s_exchange/(double)NT;
-            time_av_timestep=time_av_timestep/(double)NT;
-            fprintf(FP," Average times for \n");
-            fprintf(FP," velocity update:  \t %5.3f seconds  \n",time_av_v_update);
-            fprintf(FP," stress update:  \t %5.3f seconds  \n",time_av_s_update);
-            fprintf(FP," velocity exchange:  \t %5.3f seconds  \n",time_av_v_exchange);
-            fprintf(FP," stress exchange:  \t %5.3f seconds  \n",time_av_s_exchange);
-            fprintf(FP," timestep:  \t %5.3f seconds  \n",time_av_timestep);
-            
-        }
-        
-        
         /* ----------------------------------------------*/
         /* ----------- Check abort criteriums -----------*/
         /* ----------------------------------------------*/
@@ -4209,10 +3964,6 @@ int main(int argc, char **argv){
     }
     
     free_matrix(taper_coeff,1,NY,1,NX);
-    free_matrix(bufferlef_to_rig,1,NY,1,fdo3);
-    free_matrix(bufferrig_to_lef,1,NY,1,fdo3);
-    free_matrix(buffertop_to_bot,1,NX,1,fdo3);
-    free_matrix(bufferbot_to_top,1,NX,1,fdo3);
     switch (SEISMO){
         case 1 : /* particle velocities only */
             if (WAVETYPE==1 || WAVETYPE==3) {
@@ -4342,8 +4093,6 @@ int main(int argc, char **argv){
     /* free memory for global source positions */
     free_matrix(srcpos,1,8,1,nsrc);
     
-
-    
     if(TIME_FILT==2){
         free_vector(F_LOW_PASS_EXT,1,nfrq);
     }
@@ -4357,32 +4106,12 @@ int main(int argc, char **argv){
     MPI_Barrier(MPI_COMM_WORLD);
     
     if (MYID==0){
-        if(VERBOSE){
-            fprintf(FP,"\n **Info from main (written by PE %d): \n",MYID);
-            fprintf(FP," CPU time of program per PE: %li seconds.\n",clock()/CLOCKS_PER_SEC);
-            time8=MPI_Wtime();
-            fprintf(FP," Total real time of program: %4.2f seconds.\n",time8-time1);
-            time_av_v_update=time_av_v_update/(double)NT;
-            time_av_s_update=time_av_s_update/(double)NT;
-            time_av_v_exchange=time_av_v_exchange/(double)NT;
-            time_av_s_exchange=time_av_s_exchange/(double)NT;
-            time_av_timestep=time_av_timestep/(double)NT;
-            fprintf(FP," Average times for \n");
-            fprintf(FP," velocity update:  \t %5.3f seconds  \n",time_av_v_update);
-            fprintf(FP," stress update:  \t %5.3f seconds  \n",time_av_s_update);
-            fprintf(FP," velocity exchange:  \t %5.3f seconds  \n",time_av_v_exchange);
-            fprintf(FP," stress exchange:  \t %5.3f seconds  \n",time_av_s_exchange);
-            fprintf(FP," timestep:  \t %5.3f seconds  \n",time_av_timestep);
-        }
         if(FORWARD_ONLY==0) {
             printf("\n Inversion finished after %d iterations. \n\n",iter);
         } else {
             printf("\n Forward calculation finished. \n\n");
         }
     }
-    
-    /* de-allocate buffer for messages */
-//    MPI_Buffer_detach(buff_addr,&buffsize);
     
     fclose(FP);
     

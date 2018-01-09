@@ -29,17 +29,14 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     
     /*--------------------------------------------------------------------------*/
     /* extern variables */
-    extern float DH, DT, VP_VS_RATIO;
-    extern float EPSILON, EPSILON_u, EPSILON_rho, MUN;
+    extern float DH, DT, VP_VS_RATIO, EPSILON, EPSILON_u, EPSILON_rho, MUN;
     extern int NX, NY, NXG, NYG,  POS[3], MYID, PARAMETERIZATION,WAVETYPE;
     
-    extern int INV_RHO_ITER, INV_VP_ITER, INV_VS_ITER;
-    extern int VERBOSE;
+    extern int INV_RHO_ITER, INV_VP_ITER, INV_VS_ITER, VERBOSE;
     extern char INV_MODELFILE[STRING_SIZE];
     extern int GRAD_METHOD;
     extern float VPUPPERLIM, VPLOWERLIM, VSUPPERLIM, VSLOWERLIM, RHOUPPERLIM, RHOLOWERLIM;
-    extern int LBFGS_STEP_LENGTH;
-    extern int S, ACOUSTIC;
+    extern int LBFGS_STEP_LENGTH, S, ACOUSTIC;
     extern float S_VS, S_VP, S_RHO;
     extern int GRAD_METHOD;
     /* local variables */
@@ -54,7 +51,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     char jac[225],jac2[225];
     FILE *FP_JAC = NULL,*FP_JAC2 = NULL,*FP_JAC3 = NULL;
 
-//mpch    float io_data[NY][NX];
     float **io_data;
     
     if(GRAD_METHOD==2&&(itest==0)){
@@ -81,148 +77,106 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
         if(MYID==0) printf("\n Saving model difference for L-BFGS");
         if(MYID==0) printf("\n At Iteration %i in L-BFGS vector %i\n",iter,w);
         l=0;
-        
-        
     }
     /* invert for Zp and Zs */
     /* ------------------------------------------------------------------------------------ */
-    
-    /* find maximum of Zp and gradient waveconv */
-    pimax = 0.0;
-    gradmax = 0.0;
-    
-    for (j=1;j<=NY;j++){
-        for (i=1;i<=NX;i++){
-            
-            Zp = pi[j][i];
-            
-            if(Zp>pimax)
-                pimax=Zp;
-            
-            if((i*j == 1) || (gradmax == 0.0)) {
-                gradmax = fabs(waveconv[j][i]);
-            } else {
-                if(fabs(waveconv[j][i]) > gradmax)
-                    gradmax = fabs(waveconv[j][i]);
-            }
-        }
-    }
-    
-    /* find maximum of Zs and gradient waveconv_u */
-    if(!ACOUSTIC){
-        umax = 0.0;
-        gradmax_u = 0.0;
-        
-        for (j=1;j<=NY;j++){
-            for (i=1;i<=NX;i++){
-                
-                Zs = u[j][i];
-                
-                if(Zs>umax)
-                    umax=Zs;
-                
-                if((i*j == 1) || (gradmax_u == 0.0)) {
-                    gradmax_u = fabs(waveconv_u[j][i]);
-                } else {
-                    if(fabs(waveconv_u[j][i]) > gradmax_u)
-                        gradmax_u = fabs(waveconv_u[j][i]);
-                }
-            }
-        }
-    }
-    
-    /* find maximum of rho and gradient waveconv_rho */
-    rhomax = 0.0;
-    gradmax_rho = 0.0;
-    
-    for (j=1;j<=NY;j++){
-        for (i=1;i<=NX;i++){
-            
-            if(rho[j][i]>rhomax){rhomax=rho[j][i];}
-            
-            if((i*j == 1) || (gradmax_rho == 0.0)) {
-                gradmax_rho = fabs(waveconv_rho[j][i]);
-            } else {
-                if(fabs(waveconv_rho[j][i]) > gradmax_rho)
-                    gradmax_rho = fabs(waveconv_rho[j][i]);
-            }
-            
-        }
-    }
     
     
     /* calculate scaling factor for the gradients */
     /* --------------------------------------------- */
     
     /* parameter 1 */
-    MPI_Allreduce(&pimax,  &pimaxr,  1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-    MPI_Allreduce(&gradmax,&gradmaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-    
-    EPSILON = eps_scale * (pimaxr/gradmaxr);
-    if (iter<INV_VP_ITER){EPSILON = 0.0;}
-    epsilon1=EPSILON;
-    
-    /* L-BFGS - No normalisation */
-    if(GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH) {
-        EPSILON=eps_scale;
-        if (iter<INV_VP_ITER){EPSILON = 0.0;}
+    if (iter<INV_VP_ITER) { EPSILON = 0.0; }
+    else {
+     /* L-BFGS - No normalisation */
+       if (GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH) { EPSILON=eps_scale; }
+       else {
+       /* find maximum of Zp and gradient waveconv */
+          pimax = 0.0;
+          for (j=1;j<=NY;j++){
+          for (i=1;i<=NX;i++){
+              if ( pi[j][i] > pimax ) { pimax = pi[j][i]; } }}
+
+          gradmax = fabs(waveconv[j][i]);
+          for (j=1;j<=NY;j++){
+          for (i=1;i<=NX;i++){
+              if (fabs(waveconv[j][i]) > gradmax) { gradmax = fabs(waveconv[j][i]); } }}
+
+          MPI_Allreduce(&pimax, &pimaxr,  1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+          MPI_Allreduce(&gradmax,&gradmaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+          EPSILON = eps_scale * (pimaxr/gradmaxr);
+          epsilon1=EPSILON;
+          MPI_Allreduce(&EPSILON,&epsilon1,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+          if (MYID==0)  EPSILON=epsilon1;
+       } 
     }
-    
-    MPI_Allreduce(&EPSILON,&epsilon1,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-    
-    if (MYID==0)  EPSILON=epsilon1;
-    
+
     exchange_par();
     
-    if(!ACOUSTIC){
-        /* parameter 2 */
-        MPI_Allreduce(&umax,&umaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(&gradmax_u,&gradmaxr_u,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+    if (!ACOUSTIC){
+       if ( iter<INV_VS_ITER ) { EPSILON_u = 0.0; }
+       else {
+       /* L-BFGS - No normalisation */
+          if ( GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH ) { EPSILON_u=eps_scale; }
+          else {
+             umax = 0.0;
+             for (j=1;j<=NY;j++){
+             for (i=1;i<=NX;i++){
+                 if ( u[j][i] > umax ) { umax = u[j][i]; } }}
+
+             gradmax_u = fabs(waveconv_u[j][i]);
+             for (j=1;j<=NY;j++){
+             for (i=1;i<=NX;i++){
+                 if (fabs(waveconv_u[j][i]) > gradmax_u) { gradmax_u = fabs(waveconv_u[j][i]); } }}
         
-        EPSILON_u = eps_scale * (umaxr/gradmaxr_u);
-        if (iter<INV_VS_ITER){EPSILON_u = 0.0;}
-        epsilon1=EPSILON_u;
-        
-        /* L-BFGS - No normalisation */
-        if(GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH) {
-            EPSILON_u=eps_scale;
-            if (iter<INV_VS_ITER){EPSILON_u = 0.0;}
-        }
-        
-        MPI_Allreduce(&EPSILON_u,&epsilon1,1,MPI_FLOAT,MPI_MIN,MPI_COMM_WORLD);
-        
-        if (MYID==0)  EPSILON_u=epsilon1;
+          /* parameter 2 */
+             MPI_Allreduce(&umax,&umaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+             MPI_Allreduce(&gradmax_u,&gradmaxr_u,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+             EPSILON_u = eps_scale * (umaxr/gradmaxr_u);
+             epsilon1=EPSILON_u;
+             MPI_Allreduce(&EPSILON_u,&epsilon1,1,MPI_FLOAT,MPI_MIN,MPI_COMM_WORLD);
+             if (MYID==0)  EPSILON_u=epsilon1;
+          }
+       }
         
         exchange_par();
     }
     
     /* parameter 3 */
-    MPI_Allreduce(&rhomax,&rhomaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-    MPI_Allreduce(&gradmax_rho,&gradmaxr_rho,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
-    
-    EPSILON_rho = eps_scale * (rhomaxr/gradmaxr_rho);
-    if (iter<INV_RHO_ITER){EPSILON_rho = 0.0;}
-    epsilon1=EPSILON_rho;
-    
-    /* L-BFGS - No normalisation */
-    if(GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH) {
-        EPSILON_rho=eps_scale;
-        if (iter<INV_RHO_ITER){EPSILON_rho = 0.0;}
+    if ( iter<INV_RHO_ITER ) { EPSILON_rho = 0.0; }
+    else {
+     /* L-BFGS - No normalisation */
+       if (GRAD_METHOD==2&&(iter>LBFGS_iter_start)&&LBFGS_STEP_LENGTH) { EPSILON_rho=eps_scale; }
+       else {
+       /* find maximum of rho and gradient waveconv_rho */
+          rhomax = 0.0;
+          for (j=1;j<=NY;j++){
+          for (i=1;i<=NX;i++){
+              if (rho[j][i]>rhomax) { rhomax = rho[j][i]; } }}
+
+          gradmax_rho = fabs(waveconv_rho[j][i]);
+          for (j=1;j<=NY;j++){
+          for (i=1;i<=NX;i++){
+              if (fabs(waveconv_rho[j][i]) > gradmax_rho) { gradmax_rho = fabs(waveconv_rho[j][i]); } }}
+
+          MPI_Allreduce(&rhomax,&rhomaxr,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+          MPI_Allreduce(&gradmax_rho,&gradmaxr_rho,1,MPI_FLOAT,MPI_MAX,MPI_COMM_WORLD);
+          EPSILON_rho = eps_scale * (rhomaxr/gradmaxr_rho);
+          epsilon1=EPSILON_rho;
+          MPI_Allreduce(&EPSILON_rho,&epsilon1,1,MPI_FLOAT,MPI_MIN,MPI_COMM_WORLD);
+          if (MYID==0)  EPSILON_rho=epsilon1;
+       }
     }
-    
-    MPI_Allreduce(&EPSILON_rho,&epsilon1,1,MPI_FLOAT,MPI_MIN,MPI_COMM_WORLD);
-    
-    if (MYID==0)  EPSILON_rho=epsilon1;
     
     exchange_par();
     
-    if(MYID==0&&VERBOSE){
-        printf("MYID = %d \t pimaxr = %e \t gradmaxr = %e \n",MYID,pimaxr,gradmaxr);
-        printf("MYID = %d \t EPSILON = %e \n",MYID,EPSILON);
-        if(!ACOUSTIC)
-            printf("MYID = %d \t umaxr = %e \t gradmaxr_u = %e \n",MYID,umaxr,gradmaxr_u);
-        printf("MYID = %d \t rhomaxr = %e \t gradmaxr_rho = %e \n",MYID,rhomaxr,gradmaxr_rho);
-    }
+//    if(MYID==0&&VERBOSE){
+//        printf("MYID = %d \t pimaxr = %e \t gradmaxr = %e \n",MYID,pimaxr,gradmaxr);
+//        printf("MYID = %d \t EPSILON = %e \n",MYID,EPSILON);
+//        if(!ACOUSTIC)
+//            printf("MYID = %d \t umaxr = %e \t gradmaxr_u = %e \n",MYID,umaxr,gradmaxr_u);
+//        printf("MYID = %d \t rhomaxr = %e \t gradmaxr_rho = %e \n",MYID,rhomaxr,gradmaxr_rho);
+//    }
     
     /* loop over local grid */
     for (i=1;i<=NX;i++){
@@ -238,9 +192,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
                     unp1[j][i] = u[j][i] - EPSILON_u*waveconv_u[j][i];
                 rhonp1[j][i] = rho[j][i] - EPSILON_rho*waveconv_rho[j][i];
                 
-                
-                
-                
                 if(pinp1[j][i]<VPLOWERLIM){
                     pinp1[j][i] = VPLOWERLIM;
                 }
@@ -248,7 +199,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
                 if(pinp1[j][i]>VPUPPERLIM){
                     pinp1[j][i] = VPUPPERLIM;
                 }
-                
                 
                 if(!ACOUSTIC){
                     if((unp1[j][i]<VSLOWERLIM)&&(unp1[j][i]>1e-6)){
@@ -299,7 +249,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
                 if((rhonp1[j][i]>RHOUPPERLIM) && (INV_RHO_ITER < iter)){
                     rhonp1[j][i] = rho[j][i];
                 }
-                
                 
                 /* None of these parameters should be smaller than zero */
                 if(pinp1[j][i]<0.0){
@@ -356,11 +305,10 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     if(GRAD_METHOD==2&&(itest==0)){
         if(!ACOUSTIC){
 #ifdef MPIIO
-           for ( i=1; i<=NX; i++ ) {
            for ( j=1; j<=NY; j++ ) {
-               io_data[j][i] = s_LBFGS[j][i]; 
-           }
-           }
+           for ( i=1; i<=NX; i++ ) {
+               io_data[j][i] = s_LBFGS[j][i];  }}
+           
            sprintf(jac,"%s_s_LBFGS_vs_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
 #else
@@ -377,11 +325,10 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
         
         if(LBFGS_NPAR>1){
 #ifdef MPIIO
-           for ( i=1; i<=NX; i++ ) {
            for ( j=1; j<=NY; j++ ) {
-               io_data[j][i] = s_LBFGS[j][i+NX*NY];
-           }
-           }
+           for ( i=1; i<=NX; i++ ) {
+               io_data[j][i] = s_LBFGS[j][i+NX*NY]; }}
+           
            sprintf(jac,"%s_s_LBFGS_rho_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
 #else
@@ -398,11 +345,10 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
         
         if(LBFGS_NPAR>2){
 #ifdef MPIIO
-           for ( i=1; i<=NX; i++ ) {
            for ( j=1; j<=NY; j++ ) {
-               io_data[j][i] = s_LBFGS[j][i+2*NX*NY];
-           }
-           }
+           for ( i=1; i<=NX; i++ ) {
+               io_data[j][i] = s_LBFGS[j][i+2*NX*NY]; }}
+           
            sprintf(jac,"%s_s_LBFGS_vp_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
 #else

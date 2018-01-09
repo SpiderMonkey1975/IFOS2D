@@ -31,7 +31,7 @@ void exchange_v( float ** vx, float ** vy, float ** vz ) {
     extern const int TAG1,TAG2,TAG5,TAG6;
     MPI_Status stat[4];
     MPI_Request req[4];
-    int i, j, fdo, n, l, buf_size;
+    int i, j, fdo, fdo3, n, l, buf_size;
     float *send_buf, *send_buf2, *recv_buf, *recv_buf2;
     
     fdo = FDORDER/2 + 1;
@@ -39,16 +39,19 @@ void exchange_v( float ** vx, float ** vy, float ** vz ) {
  /* Determine the maximum size of the send buffer needed for halo exchanges */
     switch ( WAVETYPE ) {
         case 1:
-            buf_size = NX*(2*fdo-1);
+            fdo3 = 2*fdo-1;
             break;
         case 2:
-            buf_size = NX*fdo;
+            fdo3 = fdo;
             break;
         case 3:
-            buf_size = NX*(3*fdo-1);
+            fdo3 = 3*fdo-1;
             break;
     }
    
+    if ( NX>=NY ) { buf_size = NX*fdo3; }
+    else { buf_size = NY*fdo3; }
+
     send_buf  = (float *) malloc( buf_size*sizeof(float) );
     send_buf2 = (float *) malloc( buf_size*sizeof(float) );
     recv_buf  = (float *) malloc( buf_size*sizeof(float) );
@@ -117,24 +120,6 @@ void exchange_v( float ** vx, float ** vy, float ** vz ) {
     /* left - right */
     /* ************ */
     
- /* Determine the maximum size of the send buffer needed for halo exchanges */
-    switch ( WAVETYPE ) {
-        case 1:
-            buf_size = NY*(2*fdo-1);
-            break;
-        case 2:
-            buf_size = NY*fdo;
-            break;
-        case 3:
-            buf_size = NY*(3*fdo-1);
-            break;
-    }
-   
-    send_buf  = (float *) realloc( send_buf, buf_size*sizeof(float) );
-    send_buf2 = (float *) realloc( send_buf2, buf_size*sizeof(float) );
-    recv_buf  = (float *) realloc( recv_buf, buf_size*sizeof(float) );
-    recv_buf2 = (float *) realloc( recv_buf2, buf_size*sizeof(float) );
-
     /* exchange if periodic boundary condition is applied */
     if ((BOUNDARY) || (POS[1]!=0)) {
        n = 0;

@@ -111,10 +111,7 @@ void exchange_rsg_4th(float ** vx, float ** vy, float ** vz,
 
 void exchange_v(float ** vx, float ** vy, float ** vz );
 
-void exchange_s(float ** sxx, float ** syy,
-                float ** sxy,float ** sxz,float ** syz, float ** bufferlef_to_rig, float ** bufferrig_to_lef,
-                float ** buffertop_to_bot, float ** bufferbot_to_top,
-                MPI_Request * req_send, MPI_Request * req_rec, int wavetyp_start);
+void exchange_s(float ** sxx, float ** syy, float ** sxy, float ** sxz, float ** syz );
 
 void exchange_par(void);
 
@@ -508,10 +505,7 @@ void update_p_PML(int nx1, int nx2, int ny1, int ny2,
 
 void surface_acoustic_PML(int ndepth, float ** sp);
 
-void exchange_p(float ** sp, float ** bufferlef_to_rig, float ** bufferrig_to_lef, 
-                float ** buffertop_to_bot, float ** bufferbot_to_top,
-                MPI_Request * req_send, MPI_Request * req_rec);
-
+void exchange_p(float ** sp); 
 
 void read_workflow(char file_in[STRING_SIZE],float *** workflow, int *workflow_lines, char header[STRING_SIZE]);
 float ** joint_inversion_grad ( float ** gradiant_1,float ** gradiant_2, float alpha, int joint_type);
