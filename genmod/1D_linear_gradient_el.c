@@ -23,14 +23,13 @@
 
 #include "fd.h"
 
-void model_elastic(float  **  rho, float **  pi, float **  u){
+void model_elastic(float ** rho, float ** pi, float ** u){
 
 	/*--------------------------------------------------------------------------*/
 	/* extern variables */
 
 	extern int NX, NY, NXG, NYG,  POS[3], L, MYID;
-	extern char  MFILE[STRING_SIZE];	
-	extern char INV_MODELFILE[STRING_SIZE];
+	extern char  MFILE[STRING_SIZE], INV_MODELFILE[STRING_SIZE];
 	extern float DH;
 		/* local variables */
 	float vp, vs, rhov, grad1, grad2, grad3, y;
@@ -51,52 +50,71 @@ void model_elastic(float  **  rho, float **  pi, float **  u){
 	grad2=(vs2-vs1)/y;
 	grad3=(rho2-rho1)/y;	
 	
-	
-	/* loop over global grid */
-		for (i=1;i<=NXG;i++){
-			for (j=1;j<=NYG;j++){
+     /* each MPI task loops over its part of the global grid */
+	for ( i=1;i<=NX;i++ ) {
+ 	for ( j=1;j<=NY;j++ ) {
+            jj = j + POS[2]*NY;
+            if ( jj<=y ) {
+               vp = vp1 + (j*grad1);
+               vs = vs1 + (j*grad2);
+               rhov = rho1 + (j*grad3); }
+            else {
+               vp = vp2;
+               vs = vs2;
+               rhov = rho2; }
+
+	    u[j][i]=vs;
+	    rho[j][i]=rhov;
+	    pi[j][i]=vp; }}
+
+
+//	for (i=1;i<=NXG;i++){
+// 	for (j=1;j<=NYG;j++){
 			
-				if(j<=y){
-				vp=vp1+(j*grad1);
-				vs=vs1+(j*grad2);
-				rhov=rho1+(j*grad3);
-				}
+	/* only the PE which belongs to the current global gridpoint 
+ 	   is saving model parameters in his local arrays */
+//	    if ((POS[1]==((i-1)/NX)) && (POS[2]==((j-1)/NY))){
+//  	       if (j<=y) {
+//	          vp=vp1+(j*grad1);
+//	          vs=vs1+(j*grad2);
+//	          rhov=rho1+(j*grad3);
+//	       } else {				
+//	          vp=vp2;
+//	          vs=vs2;
+//	          rhov=rho2; }
 				
-				else{				
-				vp=vp2;
-				vs=vs2;
-				rhov=rho2;
-				}
-				
-				/* only the PE which belongs to the current global gridpoint 
-				  is saving model parameters in his local arrays */
-				if ((POS[1]==((i-1)/NX)) && 
-				    (POS[2]==((j-1)/NY))){
-					ii=i-POS[1]*NX;
-					jj=j-POS[2]*NY;
+//	       ii=i-POS[1]*NX;
+//	       jj=j-POS[2]*NY;
 
-					u[jj][ii]=vs;
-					rho[jj][ii]=rhov;
-					pi[jj][ii]=vp;
-				}
-			}
-		}	
+//	       u[jj][ii]=vs;
+//	       rho[jj][ii]=rhov;
+//	       pi[jj][ii]=vp; } }}
 
-		
-sprintf(modfile,"%s_rho_it_0.bin",INV_MODELFILE);
-writemod(modfile,rho,3);
-MPI_Barrier(MPI_COMM_WORLD);
-if (MYID==0) mergemod(modfile,3);
+#ifdef MPIIO
+       sprintf(modfile,"%s_rho_it_0.bin",INV_MODELFILE);
+       mergemod_par( modfile, rho );
+       sprintf(modfile,"%s_vs_it_0.bin",INV_MODELFILE);
+       mergemod_par( modfile, u );
+       sprintf(modfile,"%s_vp_it_0.bin",INV_MODELFILE);
+       mergemod_par( modfile, pi );
+#else		
+       sprintf(modfile,"%s_rho_it_0.bin",INV_MODELFILE);
+       writemod(modfile,rho,3);
+       MPI_Barrier(MPI_COMM_WORLD);
+       if (MYID==0) mergemod(modfile,3);
 
-sprintf(modfile,"%s_vs_it_0.bin",INV_MODELFILE);
-writemod(modfile,u,3);
-MPI_Barrier(MPI_COMM_WORLD);
-if (MYID==0) mergemod(modfile,3);
+       sprintf(modfile,"%s_vs_it_0.bin",INV_MODELFILE);
+       writemod(modfile,u,3);
+       MPI_Barrier(MPI_COMM_WORLD);
+       if (MYID==0) mergemod(modfile,3);
 
-sprintf(modfile,"%s_vp_it_0.bin",INV_MODELFILE);
-writemod(modfile,pi,3);
-MPI_Barrier(MPI_COMM_WORLD);
-if (MYID==0) mergemod(modfile,3);
+       sprintf(modfile,"%s_vp_it_0.bin",INV_MODELFILE);
+       writemod(modfile,pi,3);
+       MPI_Barrier(MPI_COMM_WORLD);
+       if (MYID==0) mergemod(modfile,3);
+#endif
+
+       return;
 }
 
 
