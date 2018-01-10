@@ -8,8 +8,11 @@
 #MODEL = hh.c
 MODEL = ../genmod/1D_linear_gradient_visc.c
 MODEL_AC = ../genmod/1D_linear_gradient_ac.c
+ifeq ($(G717),1)
+MODEL_EL = ../genmod/G717_elastic_start.c
+else
 MODEL_EL = ../genmod/1D_linear_gradient_el.c
-#MODEL_EL = ../genmod/G717_elastic_start.c
+endif
 MODEL_VAC = ../genmod/1D_linear_gradient_viscac.c
 MODEL_TEST = ../genmod/test.c
 
