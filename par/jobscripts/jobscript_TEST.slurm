@@ -4,8 +4,9 @@
 ## testcase. No profiling support available. 
 ##============================================================================
 
-#SBATCH --nodes=4
-#SBATCH --time=00:15:00
+#SBATCH --ntasks=96
+#SBATCH --nodes=5
+#SBATCH -t 00:15:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
 
@@ -13,25 +14,25 @@
 # Set the runtime environment
 #-----------------------------
 module swap PrgEnv-cray PrgEnv-intel
-module load fftw
+module load cray-fftw
 
 #
-# Create an aprun run command to launch 24 MPI tasks on each node (96 in total) 
+# Create a srun command to launch 96 MPI tasks with only 20 MPI tasks per node 
 #------------------------------------------------------------------------------
-run_cmd="aprun -n 96 -N 24"
+run_cmd="srun -n 96 -N 5 --export=ALL --hint=nomultithread"
 
 #
 # Setup the simulation output directory
 #---------------------------------------
-WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D
-if [ -d "$WORKDIR/TEST" ]; then
-   find ${WORKDIR}/TEST -type f -print0 | xargs -0 munlink
-   find ${WORKDIR}/TEST -type d -empty -delete
+WORKDIR=/astro/pawsey0001/mcheeseman/IFOS2D/TEST
+if [ -d "$WORKDIR" ]; then
+   find ${WORKDIR} -type f -print0 | xargs -0 munlink
+   find ${WORKDIR} -type d -empty -delete
 fi
 
-mkdir -p ${WORKDIR}/TEST/jacobian
-mkdir -p ${WORKDIR}/TEST/measured_data
-mkdir -p ${WORKDIR}/TEST/model
+mkdir -p ${WORKDIR}/jacobian
+mkdir -p ${WORKDIR}/measured_data
+mkdir -p ${WORKDIR}/model
 
 #
 # Run the forward-only simulation and then the inverse simulation
