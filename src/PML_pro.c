@@ -83,82 +83,74 @@
 void PML_pro(float * d_x, float * K_x, float * alpha_prime_x, float * a_x, float * b_x, 
             float * d_x_half, float * K_x_half, float * alpha_prime_x_half, float * a_x_half, float * b_x_half,
             float * d_y, float * K_y, float * alpha_prime_y, float * a_y, float * b_y, 
-            float * d_y_half, float * K_y_half, float * alpha_prime_y_half, float * a_y_half, float * b_y_half)
-{
+            float * d_y_half, float * K_y_half, float * alpha_prime_y_half, float * a_y_half, float * b_y_half) {
 
-	/* extern variables */
+  /* extern variables */
 
-	extern float DH, VPPML, DT, FPML;
-	extern int FREE_SURF, NX, NY, BOUNDARY, NXG, NYG;
-	extern int NPROCX, NPROCY, MYID, POS[3], FW;
-	extern FILE *FP;
+     extern float DH, VPPML, DT, FPML, npower, k_max_PML;
+     extern int FREE_SURF, NX, NY, BOUNDARY, NXG, NYG, NPROCX, NPROCY, MYID, POS[3], FW;
+     extern FILE *FP;
 	
-	/* local variables */
-	int i, j, ifw, ii, jj, xb, yb, xe, ye, h;
-	int USE_PML_XMIN, USE_PML_XMAX, USE_PML_YMIN, USE_PML_YMAX;
-	float amp, a, *coeff, fc, cp;
+  /* local variables */
+     int i, j, ifw, ii, jj, xb, yb, xe, ye, h, USE_PML_XMIN, USE_PML_XMAX, USE_PML_YMIN, USE_PML_YMAX;
       
-      extern float npower, k_max_PML;
-      /*const float npower = 2.0;*/ /*  power to compute d0 profile */
-      /*const float k_max_PML = 1.0;*/ /* from Gedney page 8.11 */
-      const float alpha_max_PML = 2.0 * PI * (FPML/2.0); /* from festa and Vilotte */
+     const float alpha_max_PML = 2.0 * PI * (FPML/2.0); /* from festa and Vilotte */
 
-      float thickness_PML_x, thickness_PML_y, xoriginleft, xoriginright, yoriginbottom, yorigintop;
-      float Rcoef , d0_x, d0_y, xval, yval, abscissa_in_PML, abscissa_normalized;
+     float amp, a, *coeff, fc, cp;
+     float thickness_PML_x, thickness_PML_y, xoriginleft, xoriginright, yoriginbottom, yorigintop;
+     float Rcoef , d0_x, d0_y, xval, yval, abscissa_in_PML, abscissa_normalized;
 
-      char profile[STRING_SIZE];
+     char profile[STRING_SIZE];
 
-      /* define profile of absorption in PML region */
+  /* define profile of absorption in PML region */
 
-      /* thickness of the PML layer in meters */
-      thickness_PML_x = FW*DH;
-      thickness_PML_y = FW*DH;
+  /* thickness of the PML layer in meters */
+     thickness_PML_x = FW*DH;
+     thickness_PML_y = FW*DH;
 
-      /* reflection coefficient (INRIA report section 6.1) */
-      Rcoef = 0.001;
+  /* reflection coefficient (INRIA report section 6.1) */
+     Rcoef = 0.001;
 
-      /* compute d0 from INRIA report section 6.1 */
-      d0_x = - (npower + 1) * VPPML * log(Rcoef) / (2.0 * thickness_PML_x);
-      d0_y = - (npower + 1) * VPPML * log(Rcoef) / (2.0 * thickness_PML_y);
+  /* compute d0 from INRIA report section 6.1 */
+     d0_x = - (npower + 1) * VPPML * log(Rcoef) / (2.0 * thickness_PML_x);
+     d0_y = - (npower + 1) * VPPML * log(Rcoef) / (2.0 * thickness_PML_y);
 	
-      /* VPPML in the X direction */
-      /* -------------------------- */
+  /* VPPML in the X direction */
+  /* -------------------------- */
 
-      /* origin of the PML layer (position of right edge minus thickness, in meters) */
-      xoriginleft = thickness_PML_x;
-      xoriginright = (NXG-1) * DH - thickness_PML_x;
+  /* origin of the PML layer (position of right edge minus thickness, in meters) */
+     xoriginleft = thickness_PML_x;
+     xoriginright = (NXG-1) * DH - thickness_PML_x;
 
-      /* left boundary */
+  /* left boundary */
 
-      for (i=1;i<=FW;i++){
+     for (i=1;i<=FW;i++){
          
           K_x[i] = 1.0;
           K_x_half[i] = 1.0;
           xval = DH * (i-1);
 
-            /* define VPPML profile at the grid points */
-            abscissa_in_PML = xoriginleft - xval;
+       /* define VPPML profile at the grid points */
+          abscissa_in_PML = xoriginleft - xval;
       
-            if(abscissa_in_PML >= 0.0){
-               abscissa_normalized = abscissa_in_PML / thickness_PML_x;
-               d_x[i] = d0_x * pow(abscissa_normalized,npower);
+          if (abscissa_in_PML >= 0.0) {
+             abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+             d_x[i] = d0_x * pow(abscissa_normalized,npower);
 
-            /* this taken from Gedney page 8.2 */
-               K_x[i] = 1.0 + (k_max_PML - 1.0) * pow(abscissa_normalized,npower);
-               alpha_prime_x[i] = alpha_max_PML * (1.0 - abscissa_normalized);
-            }
+          /* this taken from Gedney page 8.2 */
+             K_x[i] = 1.0 + (k_max_PML - 1.0) * pow(abscissa_normalized,npower);
+             alpha_prime_x[i] = alpha_max_PML * (1.0 - abscissa_normalized); }
 
-            /* define VPPML profile at half the grid points */
-            abscissa_in_PML = xoriginleft - (xval + DH/2.0);
+       /* define VPPML profile at half the grid points */
+          abscissa_in_PML = xoriginleft - (xval + DH/2.0);
 
-            if(abscissa_in_PML >= 0.0){
-               abscissa_normalized = abscissa_in_PML / thickness_PML_x;
-               d_x_half[i] = d0_x * pow(abscissa_normalized,npower);
+          if (abscissa_in_PML >= 0.0) {
+             abscissa_normalized = abscissa_in_PML / thickness_PML_x;
+             d_x_half[i] = d0_x * pow(abscissa_normalized,npower);
 
-               /* this taken from Gedney page 8.2 */
-               K_x_half[i] = 1.0 + (k_max_PML - 1.0) * pow(abscissa_normalized,npower);
-               alpha_prime_x_half[i] = alpha_max_PML * (1.0 - abscissa_normalized);
-            }
+          /* this taken from Gedney page 8.2 */
+             K_x_half[i] = 1.0 + (k_max_PML - 1.0) * pow(abscissa_normalized,npower);
+             alpha_prime_x_half[i] = alpha_max_PML * (1.0 - abscissa_normalized); }
 
        /* just in case, for -5 at the end */
        if(alpha_prime_x[i] < 0.0){ alpha_prime_x[i] = 0.0;}
@@ -311,113 +303,6 @@ void PML_pro(float * d_x, float * K_x, float * alpha_prime_x, float * a_x, float
           if(abs(d_y_half[h]) > 1.0e-6){ a_y_half[h] = d_y_half[h] * (b_y_half[h] - 1.0) / (K_y_half[h] * (d_y_half[h] + K_y_half[h] * alpha_prime_y_half[h]));}
       
        } /* end of top boundary */   
-
-
-
-      
-      
-      /*if(MYID==0){
-      sprintf(profile,"Kx.dat");
-      FP=fopen(profile,"w");
-      
-    
-      for (i=1;i<=2*FW+1;i=i++){
-       fprintf(FP,"%e \n",K_y[i]);
-      }
-      fclose(FP);
-      
-      sprintf(profile,"Kx_half.dat");                                  
-      FP=fopen(profile,"w");  
-                    
-
-      for (i=1;i<=2*FW+1;i++){
-	fprintf(FP,"%e \n",K_y_half[i]);                          
-      }
-      fclose(FP); 
-
-      sprintf(profile,"ax.dat");                                  
-      FP=fopen(profile,"w");  
-                    
-     
-      for (i=1;i<=2*FW+1;i++){
-	fprintf(FP,"%e \n",a_y[i]);                          
-      }
-      fclose(FP); 
-      
-      sprintf(profile,"bx.dat");                                  
-      FP=fopen(profile,"w");  
-                    
-   
-      for (i=1;i<=2*FW+1;i++){
-	fprintf(FP,"%e \n",b_y[i]);                          
-      }
-      fclose(FP);
-              
-      }*/
-      
-
-	/* compute coefficients for left and right grid boundaries (x-direction) */
-	/*if ((!BOUNDARY) && (POS[1]==0))
-	{
-		yb=1; ye=NY; 
-		for (i=1;i<=ifw;i++)
-		{
-			if ((POS[2]==0) && (!(FREE_SURF))) yb=i;
-			if (POS[2]==NPROCY-1) ye=NY-i+1;
-			for (j=yb;j<=ye;j++)
-				absorb_coeff[j][i]=coeff[i];
-		}
-	}
-			
-	if ((!BOUNDARY) && (POS[1]==NPROCX-1))
-	{
-		yb=1; ye=NY;
-		for (i=1;i<=ifw;i++){
-			ii=NX-i+1;
-			if ((POS[2]==0) && (!(FREE_SURF))) yb=i;
-			if (POS[2]==NPROCY-1) ye=NY-i+1;
-			for (j=yb;j<=ye;j++)
-				absorb_coeff[j][ii]=coeff[i];
-		}
-	}*/
-	
-
-	/* compute coefficients for top and bottom grid boundaries (y-direction) */
-
-	/*if ((POS[2]==0) && (!(FREE_SURF)))
-	{
-		xb=1; xe=NX;
-		for (j=1;j<=ifw;j++)
-		{
-			if ((!BOUNDARY) && (POS[1]==0)) xb=j;
-			if ((!BOUNDARY) && (POS[1]==NPROCX-1)) xe=NX-j+1;
-			for (i=xb;i<=xe;i++)
-				absorb_coeff[j][i]=coeff[j];
-		}
-	}
-
-	if (POS[2]==NPROCY-1)
-	{
-		xb=1; xe=NX;
-		for (j=1;j<=ifw;j++)
-		{
-			jj=NY-j+1;
-			if ((!BOUNDARY) && (POS[1]==0)) xb=j;
-			if ((!BOUNDARY) && (POS[1]==NPROCX-1)) xe=NX-j+1;
-			for (i=xb;i<=xe;i++)
-				absorb_coeff[jj][i]=coeff[j];
-		}
-	}*/
-
-
-/*	sprintf(modfile,"absorb_coeff.bin");
-
-	writemod(modfile,absorb_coeff,3); 
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	if (MYID==0) mergemod(modfile,3); 
-*/
 
 }
 

@@ -29,7 +29,7 @@ float **sources(int *nsrc){
 	/* declaration of extern variables */
 	extern float PLANE_WAVE_DEPTH, PHI, TS, DH, F_REF;
 	extern  char SOURCE_FILE[STRING_SIZE];
-	extern int MYID, NXG, NYG, SRCREC, RUN_MULTIPLE_SHOTS, SOURCE_TYPE;
+	extern int MYID, NXG, NYG, SRCREC, RUN_MULTIPLE_SHOTS, SOURCE_TYPE, VERBOSE;
 	extern FILE *FP;
 
 	float **srcpos = NULL;
@@ -104,10 +104,11 @@ float **sources(int *nsrc){
 			/* outputs all sources per each subdomain / node*/
 		
 			if (MYID==0){
+                             if (VERBOSE) {
 				fprintf(FP," number\t    x\t\t    y\t\t  tshift\t    fc\t\t   amp\t	source_azimuth\tsource_type\n");
 	   			for (l=1;l<=*nsrc;l++)
 		      			fprintf(FP,"    %i \t %6.2f \t %6.2f \t %6.2f \t %6.2f \t %6.2f   \t %6.2f  \t   %1.0f\n\n",
-					l, srcpos[1][l],srcpos[2][l],srcpos[4][l],srcpos[5][l],srcpos[6][l],srcpos[7][l],srcpos[8][l]);
+					l, srcpos[1][l],srcpos[2][l],srcpos[4][l],srcpos[5][l],srcpos[6][l],srcpos[7][l],srcpos[8][l]); }
 				if (RUN_MULTIPLE_SHOTS) fprintf(FP," All sources will be modelled individually because of RUN_MULTIPLE_SHOTS=1!\n");
 				else fprintf(FP," All sources will be modelled simultaneously because of RUN_MULTIPLE_SHOTS=0!\n");
 	      		}

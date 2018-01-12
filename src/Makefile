@@ -50,6 +50,11 @@ CPPFLAGS=
 ifeq ($(PARALLEL_IO),1)
   CPPFLAGS+=-DMPIIO
 endif
+ifeq ($(HDF5),1)
+  CPPFLAGS+=-DHDF5
+  CFLAGS+=-I${HDF5_DIR}/include
+  LFLAGS+=-L${HDF5_DIR}/lib -lhdf5_parallel 
+endif
 
 # after this line, no further editing should be necessary
 # --------------------------------------------------------
