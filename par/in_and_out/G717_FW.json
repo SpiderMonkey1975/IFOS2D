@@ -1,7 +1,7 @@
 {
 "Domain Decomposition" : "comment",
-			"NPROCX" : "24",
-			"NPROCY" : "40",
+			"NPROCX" : "150",
+			"NPROCY" : "50",
 
 "FD order" : "comment",
 			"FDORDER" : "4",
@@ -76,5 +76,5 @@
 			"FORWARD_ONLY" : "1",
 
 "Verbose mode" : "comment",
-			"VERBOSE" : "1"
+			"VERBOSE" : "0"
 }

@@ -4,12 +4,11 @@
 ## production configuration
 ##============================================================================
 
-#SBATCH --ntasks=5000
-#SBATCH --nodes=250
-#SBATCH -t 02:00:00
+#SBATCH --ntasks=7500
+#SBATCH --nodes=375
+#SBATCH -t 24:00:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
-#SBATCH -x nid00[324-575] 
 
 #
 # Set the runtime environment
@@ -20,12 +19,12 @@ module load cray-fftw
 #
 # Create a srun command to launch 5000 MPI tasks on 250 nodes
 #-------------------------------------------------------------
-run_cmd="srun -n 5000 -N 250 --export=ALL --hint=nomultithread"
+run_cmd="srun -n 7500 -N 375 --export=ALL --hint=nomultithread"
 
 #
 # Setup the simulation output directory
 #---------------------------------------
-WORKDIR=/astro/pawsey0001/mcheeseman/IFOS2D/G717
+WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D/G717
 #if [ -d "$WORKDIR" ]; then
 #   find ${WORKDIR} -type f -print0 | xargs -0 munlink
 #   find ${WORKDIR} -type d -empty -delete
