@@ -53,7 +53,8 @@ namespace fourier {
       typedef PolesNZeroes Tbase;
       typedef Tbase::Tcvalue Tcvalue;
 
-      static const double pi=3.141592653589793;
+//mpch      static const double pi=3.141592653589793;
+      static constexpr double pi=3.141592653589793;
       static const Tcvalue ime;
 
       Filter(): Tbase(), Mfrequency(false) { }

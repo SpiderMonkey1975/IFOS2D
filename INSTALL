@@ -46,15 +46,13 @@ number of optional arguments:
   INTEL_COMPILER -> set to 1 if you wish to build IFOS2D with the Intel suite of 
                     compilers (icc/icpc/ifort).  Note that this is default.
 
-  GNU_COMPILER   -> set to 1 if you wish to build IFOS2D with the GNU suite of 
-                    compilers (gcc/g++/gfortran).  
-
   CRAY_COMPILER  -> set to 1 if you wish to build IFOS2D with the CRAY suite of 
-                    compilers (craycc). NOT YET OPERATIONAL.  
+                    compilers (craycc).
 
+  G717           -> set to 1 if you wish to build the large production test case.
 
-Example: to build IFOS2D with the Intel compilers and with parallel I/O enabled,
+Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled,
          one would use the following make command:
 
-          make PARALLEL_IO=1 INTEL_COMPILER=1
+          make PARALLEL_IO=1 CRAY_COMPILER=1
 

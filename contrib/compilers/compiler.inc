@@ -33,22 +33,22 @@ endif
 ## GNU-specific compiler settings
 ##-------------------------------------------------------
 
-ifeq ($(GNU_COMPILER),1)
-FFLAGS=-fPIC -O3 -mfma -mavx
-CFLAGS=-fPIC -O3 -mfma -mavx
-CXXFLAGS=-fPIC -O3 -mfma -mavx
+#ifeq ($(GNU_COMPILER),1)
+#FFLAGS=-fPIC -O3 -mfma -mavx
+#CFLAGS=-fPIC -O3 -mfma -mavx
+#CXXFLAGS=-fPIC -O3 -mfma -mavx
 
-ifeq ($(DEBUG),1)
-  FFLAGS=-fPIC -g -Wall -O0 -fbounds-check
-  CFLAGS=-fPIC -g -Wall -O0 -fbounds-check
-  CXXFLAGS=-fPIC -g -Wall -O0 -fbounds-check
-endif
-ifeq ($(PROFILE), 1)
-  FFLAGS+= -g
-  CFLAGS+= -g
-  CXXFLAGS+= -g
-endif
-endif
+#ifeq ($(DEBUG),1)
+#  FFLAGS=-fPIC -g -Wall -O0 -fbounds-check
+#  CFLAGS=-fPIC -g -Wall -O0 -fbounds-check
+#  CXXFLAGS=-fPIC -g -Wall -O0 -fbounds-check
+#endif
+#ifeq ($(PROFILE), 1)
+#  FFLAGS+= -g
+#  CFLAGS+= -g
+#  CXXFLAGS+= -g
+#endif
+#endif
 
 ##-------------------------------------------------------
 ## CRAY-specific compiler settings
@@ -58,9 +58,6 @@ ifeq ($(CRAY_COMPILER),1)
 FFLAGS=-hPIC -O2 
 CFLAGS=-hPIC -O2 
 CXXFLAGS=-hPIC -O2 -h gnu  
-#FFLAGS=-hPIC -O3 -h fp3 -h mpi1 
-#CFLAGS=-hPIC -O3 -h fp3 -h mpi1 
-#CXXFLAGS=-hPIC -O3 -h fp3 -h gnu -h mpi1  
 
 ifeq ($(DEBUG),1)
   FFLAGS=-hPIC -g -m 3 -O0 -Rbcps
