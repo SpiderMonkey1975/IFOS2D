@@ -4,9 +4,9 @@
 ## testcase. No profiling support available. 
 ##============================================================================
 
-#SBATCH --ntasks=96
-#SBATCH --nodes=5
-#SBATCH -t 00:15:00
+#SBATCH --ntasks=12
+#SBATCH --nodes=1
+#SBATCH -t 00:08:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
 
@@ -19,15 +19,14 @@ module load cray-fftw
 #
 # Create a srun command to launch 96 MPI tasks with only 20 MPI tasks per node 
 #------------------------------------------------------------------------------
-run_cmd="srun -n 96 -N 5 --export=ALL --hint=nomultithread"
+run_cmd="srun -n 12 -N 1 --export=ALL --hint=nomultithread"
 
 #
 # Setup the simulation output directory
 #---------------------------------------
-WORKDIR=/astro/pawsey0001/mcheeseman/IFOS2D/TEST
+WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D/TEST
 if [ -d "$WORKDIR" ]; then
-   find ${WORKDIR} -type f -print0 | xargs -0 munlink
-   find ${WORKDIR} -type d -empty -delete
+   rm -rf ${WORKDIR} 
 fi
 
 mkdir -p ${WORKDIR}/jacobian

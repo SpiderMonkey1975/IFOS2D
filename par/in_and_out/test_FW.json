@@ -1,7 +1,7 @@
 {
 "Domain Decomposition" : "comment",
-			"NPROCX" : "6",
-			"NPROCY" : "16",
+			"NPROCX" : "3",
+			"NPROCY" : "4",
 
 "FD order" : "comment",
 			"FDORDER" : "4",
