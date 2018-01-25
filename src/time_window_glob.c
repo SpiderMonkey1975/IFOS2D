@@ -185,3 +185,4 @@ void time_window_glob(float **sectiondata, int iter, int ntr_glob, int ns, int i
     }
     
 } /* end of function time_window_glob.c */
+

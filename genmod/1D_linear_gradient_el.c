@@ -67,29 +67,6 @@ void model_elastic(float ** rho, float ** pi, float ** u){
 	    rho[j][i]=rhov;
 	    pi[j][i]=vp; }}
 
-
-//	for (i=1;i<=NXG;i++){
-// 	for (j=1;j<=NYG;j++){
-			
-	/* only the PE which belongs to the current global gridpoint 
- 	   is saving model parameters in his local arrays */
-//	    if ((POS[1]==((i-1)/NX)) && (POS[2]==((j-1)/NY))){
-//  	       if (j<=y) {
-//	          vp=vp1+(j*grad1);
-//	          vs=vs1+(j*grad2);
-//	          rhov=rho1+(j*grad3);
-//	       } else {				
-//	          vp=vp2;
-//	          vs=vs2;
-//	          rhov=rho2; }
-				
-//	       ii=i-POS[1]*NX;
-//	       jj=j-POS[2]*NY;
-
-//	       u[jj][ii]=vs;
-//	       rho[jj][ii]=rhov;
-//	       pi[jj][ii]=vp; } }}
-
 #ifdef MPIIO
        sprintf(modfile,"%s_rho_it_0.bin",INV_MODELFILE);
        mergemod_par( modfile, rho );

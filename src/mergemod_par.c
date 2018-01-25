@@ -25,22 +25,12 @@
 
 #include "fd.h"
 #include <mpi.h>
-#ifdef HDF5
-#include <hdf5.h>
-#endif
 
 void mergemod_par( char fname[STRING_SIZE], float ** data ){
 
      extern int NXG, NX, NY, NYG, POS[3];
      int ii, jj;
      float a[NY];
-
-#ifdef HDF5
-     hid_t fid, plist, dset, dspace, fspace;
-     hsize_t dims_d[2], dims_f[2], offsets[2], count[2], stride[2];
-     herr_t ierr;
-     char HDF5_FILENAME[512];
-#endif
 
      MPI_File fpout;
      MPI_Offset offset;
@@ -58,52 +48,6 @@ void mergemod_par( char fname[STRING_SIZE], float ** data ){
      }
 
      MPI_File_close( &fpout );
-
-#ifdef HDF5
-
-  /* enable MPI-IO access to the new file */
-     plist = H5Pcreate( H5P_FILE_ACCESS );
-     H5Pset_fapl_mpio( plist, MPI_COMM_WORLD, MPI_INFO_NULL );
-
-  /* create the new file */
-     sprintf( HDF5_FILENAME, "%s.h5", fname );
-     fid = H5Fcreate( HDF5_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, plist );
-     H5Pclose( plist );
-
-  /* Construct a new dataspace that covers the global domain in the new output file */
-     dims_f[0] = NXG;
-     dims_f[1] = NYG;
-     fspace = H5Screate_simple( 2, dims_f, NULL );
-
-  /* Construct a new dataspace that covers the local domain for the local MPI task */
-     dims_d[0] = NX;
-     dims_d[1] = NY;
-     dspace = H5Screate_simple( 2, dims_d, NULL );
-
-  /* Construct a new chunked dataset */
-     plist = H5Pcreate( H5P_DATASET_CREATE );
-     H5Pset_chunk( plist, 2, dims_d );
-     dset = H5Dcreate( fid, "data", H5T_NATIVE_FLOAT, fspace, H5P_DEFAULT, plist, H5P_DEFAULT );
-
-  /* Set the global offsets for the data local to this MPI task */
-     offsets[0] = POS[1]*NX;
-     offsets[1] = POS[2]*NY;
-    
-     stride[0] = 1;
-     stride[1] = 1;
-     ierr = H5Sselect_hyperslab( fspace, H5S_SELECT_SET, offsets, stride, stride, dims_d ); 
-
-     plist = H5Pcreate( H5P_DATASET_XFER );
-     H5Pset_dxpl_mpio( plist, H5FD_MPIO_COLLECTIVE );
-     ierr = H5Dwrite( dset, H5T_NATIVE_FLOAT, dspace, fspace, plist, &data[1][1] );
-
-     H5Dclose( dset );
-     H5Sclose( dspace );
-     H5Sclose( fspace );
-     H5Pclose( plist );
-     H5Fclose( fid );
-
-#endif
      return;
 }
 
