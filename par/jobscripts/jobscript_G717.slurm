@@ -5,8 +5,9 @@
 ##============================================================================
 
 #SBATCH --ntasks=7500
-#SBATCH --nodes=375
+#SBATCH --nodes=313
 #SBATCH -t 24:00:00
+#SBATCH -J ifos2d_huge
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
 
@@ -19,16 +20,16 @@ module load cray-fftw
 #
 # Create a srun command to launch 5000 MPI tasks on 250 nodes
 #-------------------------------------------------------------
-run_cmd="srun -n 7500 -N 375 --export=ALL --hint=nomultithread"
+run_cmd="srun -n 7500 -N 313 --export=ALL --hint=nomultithread"
 
 #
 # Setup the simulation output directory
 #---------------------------------------
 WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D/G717
-#if [ -d "$WORKDIR" ]; then
-#   find ${WORKDIR} -type f -print0 | xargs -0 munlink
-#   find ${WORKDIR} -type d -empty -delete
-#fi
+rm -rf  ${WORKDIR}
+
+mkdir -p ${WORKDIR}
+lfs setstripe -c 2 ${WORKDIR}
 
 mkdir -p ${WORKDIR}/jacobian
 mkdir -p ${WORKDIR}/measured_data

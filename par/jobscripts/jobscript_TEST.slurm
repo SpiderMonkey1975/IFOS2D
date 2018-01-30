@@ -6,20 +6,21 @@
 
 #SBATCH --ntasks=12
 #SBATCH --nodes=1
-#SBATCH -t 00:08:00
+#SBATCH -t 00:20:00
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
+#SBATCH --partition=debugq
 
 #
 # Set the runtime environment
 #-----------------------------
-module swap PrgEnv-cray PrgEnv-intel
 module load cray-fftw
+module unload perftools
 
 #
 # Create a srun command to launch 96 MPI tasks with only 20 MPI tasks per node 
 #------------------------------------------------------------------------------
-run_cmd="srun -n 12 -N 1 --export=ALL --hint=nomultithread"
+run_cmd="srun -n 12 -N 1 --export=ALL"
 
 #
 # Setup the simulation output directory
@@ -36,5 +37,5 @@ mkdir -p ${WORKDIR}/model
 #
 # Run the forward-only simulation and then the inverse simulation
 #-----------------------------------------------------------------
-time $run_cmd ../bin/IFOS2D in_and_out/test_FW.json
-time $run_cmd ../bin/IFOS2D in_and_out/test_INV.json
+$run_cmd ../bin/IFOS2D in_and_out/test_FW.json
+time $run_cmd ../bin/IFOS2D+pat in_and_out/test_INV.json
