@@ -1,19 +1,65 @@
-# What is IFOS2D?
+# What is special about this version of IFOS2D?
 
 
-**IFOS2D** (**I**nversion of **F**ull **O**bserved **S**eismograms) is a 2-D elastic full waveform inversion code.  
-The inversion problem is solved by a conjugate gradient method and the gradients are computed in the time domain by the adjoint state method.  
-The forward modeling is done by a time domain Finite-Difference scheme.
+This is an unofficial version of the 2D elastic full waveform inversion code **IFOS2D** ( or **I**nversion of **F**ull **O**bserved **S**eismograms).  
+The inversion problem is still solved by a conjugate gradient method and the gradients are still computed in the time domain by the adjoint state method.  
+The forward modeling continues to use a time domain Finite-Difference scheme. However this version can some significant modifications:
 
-IFOS2D is the reverse (inverse) of our 2-D Finite-Difference forward solver [**SOFI2D**](https://git.scc.kit.edu/GPIAG-Software/SOFI2D).
+- Compiler support:  IFOS2D now has support for Intel and Cray compilers on the Cray XC platform
+- Parallel I/O:  Where possible, serial I/O has been replace with MPI I/O calls resulting in significant performance increases on platforms with a parallel filesystem
+- Code Optimization: Several functions have been rewritten to increase performance when running with multiple MPI tasks
+
+The result of these modifications is that this version of IFOS2D can run efficiently at large numbers of MPI tasks.  To date, the largest number of CPUs used has been 30,000.
 
 The [**manual**](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home) is included in the download archive or can be downloaded [here](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home).
 
-# Download, Newsletter and Contact
-Release: [![build status](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/badges/master/build.svg)](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/commits/master)  Beta: [![build status](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/badges/develop/build.svg)](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/commits/develop)
+# Installation
 
-You can download the [**latest Release 2.0.3**](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/tags/Release_2.0.3) or the current [**Beta-Version**](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/tree/develop).
+A detailed installation instruction is provided in the chapter 5 of the documentation (IFOS/doc/manual_IFOS.pdf). If the manual is not compiled,
+please use the script IFOS/doc/compile_LaTeX_manual.sh
 
-To receive news and updates please [register](http://www.gpi.kit.edu/Software-FWI.php) on the e-mail list [IFOS@lists.kit.edu](http://www.gpi.kit.edu/Software-FWI.php).
+To compile IFOS2D a MAKEFILE is available in the IFOS/par directory. To use the MAKEFILE type
 
-Please use this list also to ask questions or to report problems or bugs!
+make <COMPILER_OPTIONS>
+
+in the IFOS2D/par directory. COMPILER_OPTIONS are optional arguments.  Valid values for COMPILER_OPTIONS are described below.  The MAKEFILE compiles
+the additional libaries
+
+lib cseife
+lib stfinv
+lib aff
+lib fourier
+
+before compiling the main program IFOS2D.
+
+-------------------------------------------
+
+There are several known dependencies:
+
+- working C/C++ compiler (Intel ICC and GNU gcc/g++ tested)
+- working MPI implementation
+- FFTW library (version 3)
+- standard c++ and math libraries (libstdc.a, libm.a)
+
+-------------------------------------------
+
+
+# Valid Makefile Options
+
+As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a number of optional arguments:
+
+  PARALLEL_IO    -> set to 1 if the user wishes to enable parallel IO. If you are
+                    running IFOS2D on a cluster with a parallel filesystem
+                    (like Lustre or GPFS), this can increase performance significantly.
+
+  INTEL_COMPILER -> set to 1 if you wish to build IFOS2D with the Intel suite of
+                    compilers (icc/icpc/ifort).  Note that this is default.
+
+  CRAY_COMPILER  -> set to 1 if you wish to build IFOS2D with the CRAY suite of
+                    compilers (craycc).
+
+  G717           -> set to 1 if you wish to build the large production test case.
+
+Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled, one would use the following make command:
+
+          make PARALLEL_IO=1 CRAY_COMPILER=1
