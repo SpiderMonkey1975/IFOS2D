@@ -20,15 +20,15 @@ please use the script IFOS/doc/compile_LaTeX_manual.sh
 
 To compile IFOS2D a MAKEFILE is available in the IFOS/par directory. To use the MAKEFILE type
 
-make <COMPILER_OPTIONS>
+          make <MAKEFILE_OPTIONS>
 
 in the IFOS2D/par directory. COMPILER_OPTIONS are optional arguments.  Valid values for COMPILER_OPTIONS are described below.  The MAKEFILE compiles
-the additional libaries
+the additional libaries:
 
-lib cseife
-lib stfinv
-lib aff
-lib fourier
+cseife
+stfinv
+aff
+fourier
 
 before compiling the main program IFOS2D.
 
@@ -48,17 +48,16 @@ There are several known dependencies:
 
 As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a number of optional arguments:
 
-  PARALLEL_IO    -> set to 1 if the user wishes to enable parallel IO. If you are
+  **PARALLEL_IO**    -> set to 1 if the user wishes to enable parallel IO. If you are
                     running IFOS2D on a cluster with a parallel filesystem
                     (like Lustre or GPFS), this can increase performance significantly.
 
-  INTEL_COMPILER -> set to 1 if you wish to build IFOS2D with the Intel suite of
+  **INTEL_COMPILER** -> set to 1 if you wish to build IFOS2D with the Intel suite of
                     compilers (icc/icpc/ifort).  Note that this is default.
 
-  CRAY_COMPILER  -> set to 1 if you wish to build IFOS2D with the CRAY suite of
-                    compilers (craycc).
+  **CRAY_COMPILER**  -> set to 1 if you wish to build IFOS2D with the CRAY suite of compilers (craycc).
 
-  G717           -> set to 1 if you wish to build the large production test case.
+  **G717**           -> set to 1 if you wish to build the large production test case.
 
 Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled, one would use the following make command:
 
