@@ -22,7 +22,7 @@ To compile IFOS2D a MAKEFILE is available in the IFOS/par directory. To use the 
 
           make <MAKEFILE_OPTIONS>
 
-in the IFOS2D/par directory. COMPILER_OPTIONS are optional arguments.  Valid values for COMPILER_OPTIONS are described below.  The MAKEFILE compiles
+in the IFOS2D/par directory. MAKEFILE_OPTIONS are optional arguments.  Valid values for MAKEFILE_OPTIONS are described below.  The makefile compiles
 the additional libaries:
 
 cseife
@@ -36,7 +36,7 @@ before compiling the main program IFOS2D.
 
 There are several known dependencies:
 
-- working C/C++ compiler (Intel ICC and GNU gcc/g++ tested)
+- working C/C++ compiler (Intel and Cray compilers tested)
 - working MPI implementation
 - FFTW library (version 3)
 - standard c++ and math libraries (libstdc.a, libm.a)
@@ -62,3 +62,12 @@ As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a 
 Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled, one would use the following make command:
 
           make PARALLEL_IO=1 CRAY_COMPILER=1
+
+
+# Running
+
+Input is available for two configurations:
+
+  **TEST**: a small configuration used for testing purposes and only requires 12 CPU cores to run. A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_TEST.slurm
+
+  **G717**: a much larger production configuration used to exploit the new parallelism and performance features of IFOS2D that runs at 7500 cores.  A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_G717.slurm 
