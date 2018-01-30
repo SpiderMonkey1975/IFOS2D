@@ -63,11 +63,19 @@ Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled, 
 
           make PARALLEL_IO=1 CRAY_COMPILER=1
 
+Example: to build the G717 production configuration of IFOS2D with the Intel compilers and parallel I/O enabled, one would use the following make command:
+
+          make G717=1 PARALLEL_IO=1 INTEL_COMPILER=1 
+
 
 # Running
 
 Input is available for two configurations:
 
   **TEST**: a small configuration used for testing purposes and only requires 12 CPU cores to run. A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_TEST.slurm
+  - parameter input files are located at IFOS2D/par/in_and_out (test_FW.json and test_INV.json)
+  - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_TEST.slurm
 
   **G717**: a much larger production configuration used to exploit the new parallelism and performance features of IFOS2D that runs at 7500 cores.  A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_G717.slurm 
+  - parameter input files are located at IFOS2D/par/in_and_out (G717_FW.json and G717_INV.json)
+  - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_G717.slurm
