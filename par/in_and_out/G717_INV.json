@@ -1,6 +1,6 @@
 {
 "Domain Decomposition" : "comment",
-			"NPROCX" : "150,
+			"NPROCX" : "150",
 			"NPROCY" : "50",
 
 "FD order" : "comment",
@@ -71,7 +71,7 @@
 			
 
 "General inversion parameters" : "comment",
-			"ITERMAX" : "1000",
+			"ITERMAX" : "200",
 			"DATA_DIR" : "/scratch/pawsey0001/mcheeseman/IFOS2D/G717/measured_data/G717",
 			"PARAMETERIZATION" : "1",
 			"FORWARD_ONLY" : "0",
