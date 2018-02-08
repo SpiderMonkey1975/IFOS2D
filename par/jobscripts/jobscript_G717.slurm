@@ -20,13 +20,15 @@ module load cray-fftw
 #
 # Create a srun command to launch 5000 MPI tasks on 250 nodes
 #-------------------------------------------------------------
-run_cmd="srun -n 7500 -N 313 --export=ALL --hint=nomultithread"
+run_cmd="srun -n 7500 -N 313 --export=ALL"
 
 #
 # Setup the simulation output directory
 #---------------------------------------
 WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D/G717
-rm -rf  ${WORKDIR}
+if [ -d "$WORKDIR" ]; then
+   rm -rf ${WORKDIR}
+fi
 
 mkdir -p ${WORKDIR}
 lfs setstripe -c 2 ${WORKDIR}

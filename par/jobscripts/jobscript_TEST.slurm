@@ -7,13 +7,14 @@
 #SBATCH --ntasks=12
 #SBATCH --nodes=1
 #SBATCH -t 00:20:00
+#SBATCH -J ifos2d_test
 #SBATCH --account=pawsey0001
 #SBATCH --export=NONE
-#SBATCH --partition=debugq
 
 #
 # Set the runtime environment
 #-----------------------------
+module swap PrgEnv-cray PrgEnv-intel
 module load cray-fftw
 module unload perftools
 
@@ -37,5 +38,5 @@ mkdir -p ${WORKDIR}/model
 #
 # Run the forward-only simulation and then the inverse simulation
 #-----------------------------------------------------------------
-$run_cmd ../bin/IFOS2D in_and_out/test_FW.json
-time $run_cmd ../bin/IFOS2D+pat in_and_out/test_INV.json
+time $run_cmd ../bin/IFOS2D in_and_out/test_FW.json
+time $run_cmd ../bin/IFOS2D in_and_out/test_INV.json
