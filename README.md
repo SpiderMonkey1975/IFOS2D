@@ -57,18 +57,10 @@ As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a 
 
   **CRAY_COMPILER**  -> set to 1 if you wish to build IFOS2D with the CRAY suite of compilers (craycc).
 
-  **G717**           -> set to 1 if you wish to build the large production test case.
-
-Example: to build IFOS2D with the Cray compilers and with parallel I/O enabled, one would use the following make command:
-
-          make PARALLEL_IO=1 CRAY_COMPILER=1
-
-Example: to build the G717 production configuration of IFOS2D with the Intel compilers and parallel I/O enabled, one would use the following make command:
-
-          make G717=1 PARALLEL_IO=1 INTEL_COMPILER=1 
+  **G717**           -> set to 1 if you wish to build the large production test case (forward-only simulation) or set to 2 for the inverse simulation.
 
 
-# Running
+# Available Configurations 
 
 Input is available for two configurations:
 
@@ -79,3 +71,63 @@ Input is available for two configurations:
   **G717**: a much larger production configuration used to exploit the new parallelism and performance features of IFOS2D that runs at 7500 cores.  A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_G717.slurm 
   - parameter input files are located at IFOS2D/par/in_and_out (G717_FW.json and G717_INV.json)
   - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_G717.slurm
+
+
+# Running the small testcase
+
+This is an easy proof-of-concept configuration meant for new users and when first installing IFOS2D on a new system.  We will assume you have access to INTEL compilers and want to use parallel I/O for this example.  You build the appropriate IFOS2D binary as so:
+
+   cd IFOS2D/par
+   make distclean
+   make INTEL_COMPILER=1 PARALLEL_IO=1
+
+Now make sure you set the output directories for the run in the appropriate json files.
+
+   cd in_and_out
+   open test_FW.json and set MFILE and SEIS_FILE to appropriate locations.  Preferably this would be a large and fast filesystem
+   open test_INV.json and set MFILE, SEIS_FILE, DATA_DIR, JACOBIAN and INV_MODELFILE to the same fast filesystem
+
+Finally, we setup the SLURM jobscript for our test run
+
+   cd ..
+   cp jobscripts/jobscript_TEST.slurm ./job
+   open job and set WORKDIR to appropriate output directory.  This NEEDS to be the same output directory specified in the test_FW.json and test_INV.json input files
+
+Please note that you MUST make a copy of the appropriate jobscript into your par/ subdirectory.
+
+And we submit the job to the SLURM scheduler
+
+   sbatch job
+
+
+# Running the large production case (G717)
+
+This is a large and more complex simulation suitable for running on large numbers of CPUs on supercomputers.  Currently this configuration expects to run on 7500 cores.  Again, we assume that you have access to Intel compilers.  It is strongly recommended that parallel I/O is enabled for these runs.
+
+   cd IFOS2D/par
+   make distclean
+   make INTEL_COMPILER=1 PARALLEL_IO=1 G717=1
+
+Notice that two seperate binaries (IFOS2D and IFOS2Dinv) are generated corresponding to the forward-only and inverse simulations.
+
+Now we set the output directories for the run in the appropriate json files.
+
+   cd in_and_out
+   open G717_FW.json and set MFILE and SEIS_FILE to appropriate locations.  Preferably this would be a large and fast filesystem
+   open G717_INV.json and set MFILE, SEIS_FILE, DATA_DIR, JACOBIAN and INV_MODELFILE to the same fast filesystem
+
+It is strongly recommended that the filesystem you specify be a parallel filesystem based on Lustre, GPFS or similar technology.
+
+We setup the SLURM jobscript as so
+
+   cd ..
+   cp jobscripts/jobscript_G717.slurm ./job
+   open job and set WORKDIR to appropriate output directory.  This NEEDS to be the same output directory specified in the G717_FW.json and G717_INV.json
+ input files
+
+Please note that you MUST make a copy of the appropriate jobscript into your par/ subdirectory.
+
+
+And we submit the job to the SLURM scheduler
+
+   sbatch job
