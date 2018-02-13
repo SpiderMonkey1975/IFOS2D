@@ -38,7 +38,11 @@ mkdir -p ${WORKDIR}/measured_data
 mkdir -p ${WORKDIR}/model
 
 #
-# Run the forward-only simulation and then the inverse simulation
-#-----------------------------------------------------------------
+# Run the forward-only simulation 
+#---------------------------------
 time $run_cmd ../bin/IFOS2D in_and_out/G717_FW.json
-time $run_cmd ../bin/IFOS2D in_and_out/G717_INV.json
+
+#
+# Run the the inverse simulation
+#--------------------------------
+time $run_cmd ../bin/IFOS2Dinv in_and_out/G717_INV.json

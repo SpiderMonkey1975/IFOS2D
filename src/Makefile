@@ -1,38 +1,49 @@
 # Makefile for IFOS2D
 
 #--------------------------------------------------------
-# edit here:
+
+CPPFLAGS=
+
+# Check if a G7171 production run has been requested
+
+ifeq ($(G717),1)
+g717_run=1
+endif
+ifeq ($(G717),2)
+g717_run=1
+endif
+
 
 # source code for model generation
 
-#MODEL = hh.c
 MODEL = ../genmod/1D_linear_gradient_visc.c
 MODEL_AC = ../genmod/1D_linear_gradient_ac.c
-ifeq ($(G717),1)
-MODEL_EL = ../genmod/G717_elastic_start.c
+ifeq ($(g717_run),1)
+MODEL_EL = ../genmod/G717_elastic.c
 else
 MODEL_EL = ../genmod/1D_linear_gradient_el.c
 endif
 MODEL_VAC = ../genmod/1D_linear_gradient_viscac.c
 MODEL_TEST = ../genmod/test.c
 
-EXEC= ../bin
+# Set name of executable
+
+EXEC = ../bin/IFOS2D
+ifeq ($(G717),2)
+EXEC = ../bin/IFOS2Dinv
+CPPFLAGS+=-DG717_INVERSE 
+endif
 
 include ../contrib/compilers/compiler.inc
 
 LFLAGS=-lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
-ifeq ($(ALLINEA),1)
-  LFLAGS+=-dynamic -L/group/pawsey0001/mcheeseman -lmap-sampler-pmpi -lmap-sampler -Wl,--eh-frame-hdr -Wl,-rpath=/group/pawsey0001/mcheeseman
-endif
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
 
 
 ## Check if user wishes to use parallel IO
-ifeq ($(SERIAL_IO),1)
-  CPPFLAGS=
-else
-  CPPFLAGS=-DMPIIO
+ifeq ($(PARALLEL_IO),1)
+  CPPFLAGS+=-DMPIIO
 endif
 
 # after this line, no further editing should be necessary
@@ -191,15 +202,8 @@ IFOS2D= \
 # Targes
 # -------------
 
-ifeq ($(CRAYPAT),1)
 IFOS2D:		$(IFOS_OBJ) fd.h
-	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC)/IFOS2D $(LFLAGS)
-	pat_build $(EXEC)/IFOS2D
-else
-IFOS2D:		$(IFOS_OBJ) fd.h
-	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC)/IFOS2D $(LFLAGS)
-endif
-
+	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC) $(LFLAGS)
 
 all: IFOS2D snapmerge
 

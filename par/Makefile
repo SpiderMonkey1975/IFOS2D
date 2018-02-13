@@ -20,10 +20,10 @@ libcseife:
 .PHONY: IFOS2D 
 IFOS2D: aff fourier stfinv libcseife
 	mkdir -p ../bin
-ifdef MODEL
-	$(MAKE) -C ../src/ IFOS2D MODEL=$(MODEL)
-else
-	$(MAKE) -C ../src/ IFOS2D 
+	$(MAKE) -C ../src/ IFOS2D
+ifeq ($(G717),1) 
+	rm -rf ../genmod/G717_elastic.o	
+	$(MAKE) -C ../src/ IFOS2D G717=2 
 endif
 
 .PHONY: install
@@ -32,6 +32,7 @@ install: clean-bin IFOS2D
 .PHONY: clean
 clean: 
 	rm -rf ../bin/*
+	rm -rf ../contrib/bin/*.a
 	$(MAKE) -C ../contrib/aff clean
 	$(MAKE) -C ../contrib/fourier clean
 	$(MAKE) -C ../contrib/stfinv clean
