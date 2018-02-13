@@ -77,27 +77,27 @@ Input is available for two configurations:
 
 This is an easy proof-of-concept configuration meant for new users and when first installing IFOS2D on a new system.  We will assume you have access to INTEL compilers and want to use parallel I/O for this example.  You build the appropriate IFOS2D binary as so:
 
-   cd IFOS2D/par
-   make distclean
-   make INTEL_COMPILER=1 PARALLEL_IO=1
+          cd IFOS2D/par
+          make distclean
+          make INTEL_COMPILER=1 PARALLEL_IO=1
 
 Now make sure you set the output directories for the run in the appropriate json files.
 
-   cd in_and_out
-   open test_FW.json and set MFILE and SEIS_FILE to appropriate locations.  Preferably this would be a large and fast filesystem
-   open test_INV.json and set MFILE, SEIS_FILE, DATA_DIR, JACOBIAN and INV_MODELFILE to the same fast filesystem
+          cd in_and_out
+          open test_FW.json and set MFILE and SEIS_FILE to appropriate locations.  Preferably this would be a large and fast filesystem
+          open test_INV.json and set MFILE, SEIS_FILE, DATA_DIR, JACOBIAN and INV_MODELFILE to the same fast filesystem
 
 Finally, we setup the SLURM jobscript for our test run
 
-   cd ..
-   cp jobscripts/jobscript_TEST.slurm ./job
-   open job and set WORKDIR to appropriate output directory.  This NEEDS to be the same output directory specified in the test_FW.json and test_INV.json input files
+          cd ..
+          cp jobscripts/jobscript_TEST.slurm ./job
+          open job and set WORKDIR to appropriate output directory.  This NEEDS to be the same output directory specified in the test_FW.json and test_INV.json input files
 
 Please note that you MUST make a copy of the appropriate jobscript into your par/ subdirectory.
 
 And we submit the job to the SLURM scheduler
 
-   sbatch job
+          sbatch job
 
 
 # Running the large production case (G717)
@@ -131,4 +131,4 @@ Please note that you MUST make a copy of the appropriate jobscript into your par
 
 And we submit the job to the SLURM scheduler
 
-   sbatch job
+          sbatch job
