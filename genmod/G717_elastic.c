@@ -43,10 +43,10 @@ void model_elastic(float ** rho, float ** pi, float ** u){
 
 #ifdef G717_INVERSE
         nodes = 22;
-        char flnode_file[40] = "par/model_true/flnodes.G717.start";
+        char flnode_file[30] = "model_true/flnodes.G717.start";
 #else
         nodes = 388; 
-        char flnode_file[40] = "par/model_true/flnodes.G717.tue";
+        char flnode_file[30] = "model_true/flnodes.G717";
 #endif
 	
 	fldepth = (float *) malloc( nodes*sizeof(float) );
