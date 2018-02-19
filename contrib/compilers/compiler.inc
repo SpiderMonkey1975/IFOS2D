@@ -1,6 +1,3 @@
-CXX=CC
-CC=cc
-FC=ftn
 
 ifeq ($(ALLINEA), 1)
   PROFILE=1
@@ -12,6 +9,10 @@ endif
 ##-------------------------------------------------------
 ## CRAY-specific compiler settings (default)
 ##-------------------------------------------------------
+
+CXX=CC
+CC=cc
+FC=ftn
 
 FFLAGS=-hPIC -O3 -h fp3 
 CFLAGS=-hPIC -O3 -h fp3
@@ -33,6 +34,13 @@ endif
 ##-------------------------------------------------------
 
 ifeq ($(INTEL_COMPILER),1)
+
+ifeq ($(NONCRAY),1)
+CC=mpiicc
+CXX=mpiicpc
+FC=mpiifort
+endif
+
 FFLAGS=-fPIC -O3 -xAVX -ff2c -extend-source -nbs
 CFLAGS=-fPIC -fast -no-ipo
 CXXFLAGS=-fPIC -fast -no-ipo
@@ -55,6 +63,13 @@ endif
 ##-------------------------------------------------------
 
 ifeq ($(GNU_COMPILER),1)
+
+ifeq ($(NONCRAY),1)
+CC=mpicc
+CXX=mpicxx
+FC=mpif90
+endif
+
 FFLAGS=-fPIC -O3 -mfma -mavx2 -ff2c -ffixed-line-length-none -fno-backslash
 CFLAGS=-fPIC -O3 -mfma -mavx2
 CXXFLAGS=-fPIC -O3 -mfma -mavx2
