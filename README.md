@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SpiderMonkey1975/IFOS2D.svg?branch=master)](https://travis-ci.org/SpiderMonkey1975/IFOS2D)
+
 # What is special about this version of IFOS2D?
 
 
