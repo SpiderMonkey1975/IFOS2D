@@ -4,10 +4,10 @@ dist: Trusty
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y mpich2 libfftw3-dev
+  - sudo apt-get install -y libopenmpi1.6 libfftw3-dev
 
 script:
-  - export CC=mpicc
+  - export cc=mpicc CC=mpicxx
   - cd par
   - make clean
-  - make PARALLEL_IO=1
+  - make GNU_COMPILER=1

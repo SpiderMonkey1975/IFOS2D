@@ -48,29 +48,37 @@ There are several known dependencies:
 
 As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a number of optional arguments:
 
-  **PARALLEL_IO**    -> set to 1 if the user wishes to enable parallel IO. If you are
+  **SERIAL_IO**     -> set to 1 if the user wishes to disable the use of parallel IO. If you are
                     running IFOS2D on a cluster with a parallel filesystem
-                    (like Lustre or GPFS), this can increase performance significantly.
+                    (like Lustre or GPFS), we strongly recommend NOT using this option.  If you are running on a workstation or laptop
+                    then you probably should try running with this option enabled.
 
-  **INTEL_COMPILER** -> set to 1 if you wish to build IFOS2D with the Intel suite of
-                    compilers (icc/icpc/ifort).  Note that this is default.
+  **INTEL_COMPILER** -> set to 1 if you wish to build IFOS2D with the Intel suite of compilers (icc/icpc/ifort).  
 
   **CRAY_COMPILER**  -> set to 1 if you wish to build IFOS2D with the CRAY suite of compilers (craycc).
 
-  **G717**           -> set to 1 if you wish to build the large production test case (forward-only simulation) or set to 2 for the inverse simulation.
+  **GNU_COMPILER**   -> set to 1 if you wish to build IFOS2D with the GNU suite of compilers (gcc/g++/gfortran).
+
+  **G717**           -> set to 1 if you wish to build the large production test case.
+
+Please note that if you do not specify a specific compiler then the Cray compilers are enabled by default.
 
 
 # Available Configurations 
 
-Input is available for two configurations:
+Input is available for three configurations:
 
-  **TEST**: a small configuration used for testing purposes and only requires 12 CPU cores to run. A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_TEST.slurm
+  **TEST**: a small configuration used for testing purposes and only requires 12 CPU cores to run. 
   - parameter input files are located at IFOS2D/par/in_and_out (test_FW.json and test_INV.json)
   - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_TEST.slurm
 
-  **G717**: a much larger production configuration used to exploit the new parallelism and performance features of IFOS2D that runs at 7500 cores.  A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_G717.slurm 
+  **G717**: a much larger production configuration used to exploit the new parallelism and performance features of IFOS2D that runs at 7500 cores. 
   - parameter input files are located at IFOS2D/par/in_and_out (G717_FW.json and G717_INV.json)
   - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_G717.slurm
+
+  **800x400km**: a medium-sized production configuration that runs at 5000 cores.  A SLURM job submission file can be found at IFOS2D/par/jobscripts/jobscript_800x400km.slurm
+  - parameter input files are located at IFOS2D/par/in_and_out (800x400km_FW.json and 800x400km_INV.json)
+  - example SLURM job submission file is located at IFOS2D/par/jobscripts/jobscript_800x400km.slurm
 
 
 # Running the small testcase
@@ -79,7 +87,7 @@ This is an easy proof-of-concept configuration meant for new users and when firs
 
           cd IFOS2D/par
           make distclean
-          make INTEL_COMPILER=1 PARALLEL_IO=1
+          make INTEL_COMPILER=1 
 
 Now make sure you set the output directories for the run in the appropriate json files.
 
@@ -106,7 +114,7 @@ This is a large and more complex simulation suitable for running on large number
 
           cd IFOS2D/par
           make distclean
-          make INTEL_COMPILER=1 PARALLEL_IO=1 G717=1
+          make INTEL_COMPILER=1 G717=1
 
 Notice that two seperate binaries (IFOS2D and IFOS2Dinv) are generated corresponding to the forward-only and inverse simulations.
 

@@ -50,3 +50,25 @@ ifeq ($(PROFILE), 1)
 endif
 endif
 
+##-------------------------------------------------------
+## GNU-specific compiler settings
+##-------------------------------------------------------
+
+ifeq ($(GNU_COMPILER),1)
+FFLAGS=-fPIC -O3 -mfma -mavx2 -ff2c -ffixed-line-length-none -fno-backslash
+CFLAGS=-fPIC -O3 -mfma -mavx2
+CXXFLAGS=-fPIC -O3 -mfma -mavx2
+
+ifeq ($(DEBUG),1)
+  FFLAGS=-fPIC -g -Wall -O0 -check=stack -traceback -ff2c -ffixed-line-length-none -fno-backslash
+  CFLAGS=-fPIC -g -Wall -O0 -check=stack -traceback
+  CXXFLAGS=-fPIC -g -Wall -O0 -check=stack -traceback
+endif
+
+ifeq ($(PROFILE), 1)
+  FFLAGS+= -g
+  CFLAGS+= -g
+  CXXFLAGS+= -g
+endif
+endif
+

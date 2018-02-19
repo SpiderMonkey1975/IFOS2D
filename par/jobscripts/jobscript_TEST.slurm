@@ -6,17 +6,15 @@
 
 #SBATCH --ntasks=12
 #SBATCH --nodes=1
-#SBATCH -t 00:20:00
+#SBATCH -t 00:15:00
 #SBATCH -J ifos2d_test
 #SBATCH --account=pawsey0001
-#SBATCH --export=NONE
+#SBATCH --export=MYSCRATCH
 
 #
 # Set the runtime environment
 #-----------------------------
-module swap PrgEnv-cray PrgEnv-intel
 module load cray-fftw
-module unload perftools
 
 #
 # Create a srun command to launch 96 MPI tasks with only 20 MPI tasks per node 
@@ -26,7 +24,7 @@ run_cmd="srun -n 12 -N 1 --export=ALL"
 #
 # Setup the simulation output directory
 #---------------------------------------
-WORKDIR=/scratch/pawsey0001/mcheeseman/IFOS2D/TEST
+WORKDIR=${MYSCRATCH}/IFOS2D/TEST
 if [ -d "$WORKDIR" ]; then
    rm -rf ${WORKDIR} 
 fi

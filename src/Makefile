@@ -13,7 +13,6 @@ ifeq ($(G717),2)
 g717_run=1
 endif
 
-
 # source code for model generation
 
 MODEL = ../genmod/1D_linear_gradient_visc.c
@@ -34,20 +33,21 @@ EXEC = ../bin/IFOS2Dinv
 CPPFLAGS+=-DG717_INVERSE 
 endif
 
+## Check if user wishes to disable the use of parallel IO
+
+ifneq ($(SERIAL_IO),1)
+  CPPFLAGS+=-DMPIIO
+endif
+
+
+# after this line, no further editing should be necessary
+# --------------------------------------------------------
+
 include ../contrib/compilers/compiler.inc
 
 LFLAGS=-lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
-
-
-## Check if user wishes to use parallel IO
-ifeq ($(PARALLEL_IO),1)
-  CPPFLAGS+=-DMPIIO
-endif
-
-# after this line, no further editing should be necessary
-# --------------------------------------------------------
 
 # -------------
 # pattern rules

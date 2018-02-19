@@ -21,10 +21,10 @@ libcseife:
 IFOS2D: aff fourier stfinv libcseife
 	mkdir -p ../bin
 	$(MAKE) -C ../src/ IFOS2D
-ifeq ($(G717),1) 
-	rm -rf ../genmod/G717_elastic.o	
-	$(MAKE) -C ../src/ IFOS2D G717=2 
-endif
+#ifeq ($(G717),1) 
+#	rm -rf ../genmod/G717_elastic.o	
+#	$(MAKE) -C ../src/ IFOS2D G717=2 
+#endif
 
 .PHONY: install
 install: clean-bin IFOS2D
