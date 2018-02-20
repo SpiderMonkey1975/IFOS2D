@@ -142,3 +142,14 @@ Please note that you MUST make a copy of the appropriate jobscript into your par
 And we submit the job to the SLURM scheduler
 
           sbatch job
+
+
+# Running on a Non-Cray platform
+
+Most development work on this version of IFOS2D has been concentrated on optimizing the performance of IFOS2D on Cray supercomputers.  However, one can build and run IFOS2D on non-Cray platforms by adding the NONCRAY option to your Makefile calls.  For example, suppose one wishes to build the G717 production configuration with Intel compiler support on a non-Cray system, one would use the commands:
+
+          cd IFOS2D/par
+          make distclean
+          make INTEL_COMPILER=1 G717=1 NONCRAY=1
+
+Notice the extra NONCRAY variable set in the make call.  Both Intel and GNU compiler support is available with non-Cray builds.
