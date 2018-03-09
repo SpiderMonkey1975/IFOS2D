@@ -1,24 +1,24 @@
-/*-----------------------------------------------------------------------------------------
- * Copyright (C) 2016  For the list of authors, see file AUTHORS.
+/*------------------------------------------------------------------------
+ * Copyright (C) 2015 For the list of authors, see file AUTHORS.
  *
- * This file is part of IFOS.
+ * This file is part of IFOS3D.
  * 
- * IFOS is free software: you can redistribute it and/or modify
+ * IFOS3D is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 2.0 of the License only.
  * 
- * IFOS is distributed in the hope that it will be useful,
+ * IFOS3D is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with IFOS. See file COPYING and/or <http://www.gnu.org/licenses/gpl-2.0.html>.
------------------------------------------------------------------------------------------*/
+ * along with IFOS3D. See file COPYING and/or 
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+--------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
  *   Read one single amplitude from file                                   
- *
  *  ----------------------------------------------------------------------*/
 
 #include "fd.h"
@@ -38,7 +38,7 @@ float readdsk(FILE *fp_in, int format){
 
 	switch(format){
                 case 1 : /* SU*/ 
-                        declare_error(" Sorry, SU-format for snapshots not implemented yet. \n");
+                        err(" Sorry, SU-format for snapshots not implemented yet. \n");
                         break;
 		case 2 :  /*ASCII*/
                         fscanf(fp_in,"%e\n", &amp); 
@@ -47,10 +47,14 @@ float readdsk(FILE *fp_in, int format){
 
 			fread(&amp, sizeof(float), 1, fp_in);
               		break;
+		
+		case 4 : 
+			fread(&amp, sizeof(float), 1, fp_in);
+              		break;
 	                
 		default :
 			printf(" Don't know the format for the snapshot-data !\n");
-			declare_error(" No output was written. ");
+			err(" No output was written. ");
 	}
 
 	return amp;

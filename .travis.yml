@@ -10,7 +10,3 @@ script:
   - cd par
   - make clean
   - make GNU_COMPILER=1 NONCRAY=1
-  - cd ../src 
-  - make clean
-  - cd ../par 
-  - make GNU_COMPILER=1 NONCRAY=1 G717=1

@@ -1,183 +1,368 @@
-/*-----------------------------------------------------------------------------------------
- * Copyright (C) 2016  For the list of authors, see file AUTHORS.
+/*------------------------------------------------------------------------
+ * Copyright (C) 2015 For the list of authors, see file AUTHORS.
  *
- * This file is part of IFOS.
+ * This file is part of IFOS3D.
  * 
- * IFOS is free software: you can redistribute it and/or modify
+ * IFOS3D is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 2.0 of the License only.
  * 
- * IFOS is distributed in the hope that it will be useful,
+ * IFOS3D is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with IFOS. See file COPYING and/or <http://www.gnu.org/licenses/gpl-2.0.html>.
------------------------------------------------------------------------------------------*/
+ * along with IFOS3D. See file COPYING and/or 
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+--------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
- *   write values of dynamic field variables at the edges of the
- *   local grid into buffer arrays and  exchanged between
- *   processes.
- *
- *  ----------------------------------------------------------------------*/
+ * exchange of stress values at grid boundaries between processors
+ * when using the standard staggered grid
+ * ----------------------------------------------------------------------*/
 
 #include "fd.h"
 
-void exchange_s( float ** sxx, float ** syy, float ** sxy, float ** sxz, float ** syz ) {
-    
-    extern int NX, NY, POS[3], NPROCX, NPROCY, BOUNDARY, FDORDER, WAVETYPE;
-    extern int INDEX[5];
-    extern const int TAG1,TAG2,TAG5,TAG6;
-    MPI_Status stat[4];
-    MPI_Request req[4];
-    int i, j, fdo, fdo3, buf_size, n, l;
-    float *send_buf, *send_buf2, *recv_buf, *recv_buf2;
-    
-    fdo = FDORDER/2 + 1;
-    switch ( WAVETYPE ) {
-        case 1:
-            fdo3 = 2*fdo-1;
-            break;
-        case 2:
-            fdo3 = fdo;
-            break;
-        case 3:
-            fdo3 = 3*fdo-1;
-            break;
-    }
-   
-    if ( NX>=NY ) { buf_size = NX*fdo3; }
-    else { buf_size = NY*fdo3; }
+double exchange_s(float *** sxx, float *** syy, float *** szz, 
+float *** sxy, float *** syz, float *** sxz,
+float *** bufferlef_to_rig, float *** bufferrig_to_lef, 
+float *** buffertop_to_bot, float *** bufferbot_to_top, 
+float *** bufferfro_to_bac, float *** bufferbac_to_fro, MPI_Request * req_send, MPI_Request * req_rec) {
 
-    send_buf = (float *) malloc( buf_size*sizeof(float) );
-    send_buf2 = (float *) malloc( buf_size*sizeof(float) );
-    recv_buf = (float *) malloc( buf_size*sizeof(float) );
-    recv_buf2 = (float *) malloc( buf_size*sizeof(float) );
+	extern int NX, NY, NZ, POS[4], NPROCX, NPROCY, NPROCZ, BOUNDARY, FDORDER,  INDEX[7];    /*MYID,LOG,*/
+	extern const int TAG1,TAG2,TAG3,TAG4,TAG5,TAG6;
 
-    /* ************ */
-    /* top - bottom */
-    /* ************ */
-    
-    if (POS[2]!=0) {	/* no boundary exchange at top of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { send_buf[n] = sxy[l][i]; n++; }}
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) { send_buf[n] = syy[l][i]; n++; }} }
-                
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { send_buf[n] = syz[l][i]; n++; }} }} 
-    
-    if (POS[2]!=NPROCY-1) {	/* no boundary exchange at bottom of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) { send_buf2[n] = sxy[NY-l+1][i]; n++; }}
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { send_buf2[n] = syy[NY-l+1][i]; n++; }} }
-            
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) {
-              send_buf2[n] = syz[NY-l+1][i]; n++; }} }}
-    
- /* send and receive values for points at inner boundaries */
-    MPI_Isend( send_buf, buf_size, MPI_FLOAT, INDEX[3], TAG5, MPI_COMM_WORLD, &req[0] );
-    MPI_Irecv( recv_buf, buf_size, MPI_FLOAT, INDEX[4], TAG5, MPI_COMM_WORLD, &req[1] );
-    MPI_Isend( send_buf2, buf_size, MPI_FLOAT, INDEX[4], TAG6, MPI_COMM_WORLD, &req[2] );
-    MPI_Irecv( recv_buf2, buf_size, MPI_FLOAT, INDEX[3], TAG6, MPI_COMM_WORLD, &req[3] );
-    MPI_Waitall( 4, req, stat );
+	MPI_Status status;	
+	int i, j, k, l, n, nf1, nf2;
+	double time=0.0; /*time1=0.0;*/
 
-    if (POS[2]!=NPROCY-1){	/* no boundary exchange at bottom of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { sxy[NY+l][i] = recv_buf[n]; n++; }}
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) { syy[NY+l][i] = recv_buf[n]; n++; }} }
-            
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { syz[NY+l][i] = recv_buf[n]; n++; }} }}
-    
-    if (POS[2]!=0){	/* no boundary exchange at top of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) { sxy[1-l][i] = recv_buf2[n]; n++; }}
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo-1;l++) { syy[1-l][i] = recv_buf2[n]; n++; }} }
-            
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (i=1;i<=NX;i++){
-          for (l=1;l<=fdo;l++) { syz[1-l][i] = recv_buf2[n]; n++; }} }}
+	
+        nf1=(3*FDORDER/2)-1;
+	nf2=nf1-1;
 
-    /* ************ */
-    /* left - right */
-    /* ************ */
-    
-    if ((BOUNDARY) || (POS[1]!=0)){	/* no boundary exchange at left edge of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo-1;l++) { send_buf[n] = sxy[j][l]; n++; }}
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo;l++) { send_buf[n] = sxx[j][l]; n++; }} }
-                
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo-1;l++) { send_buf[n] = sxz[j][l]; n++; }} }}
-    
-    if ((BOUNDARY) || (POS[1]!=NPROCX-1)){	/* no boundary exchange at right edge of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo;l++) { send_buf2[n] = sxy[j][NX-l+1]; n++; }}
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo-1;l++) { send_buf2[n] = sxx[j][NX-l+1]; n++; }} }
-                
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo;l++) { send_buf2[n] = sxz[j][NX-l+1]; n++; }} }}
-    
- /* send and receive values for points at inner boundaries */
-    MPI_Isend( send_buf, buf_size, MPI_FLOAT, INDEX[1], TAG1, MPI_COMM_WORLD, &req[0] );
-    MPI_Irecv( recv_buf, buf_size, MPI_FLOAT, INDEX[2], TAG1, MPI_COMM_WORLD, &req[1] );
-    MPI_Isend( send_buf2, buf_size, MPI_FLOAT, INDEX[2], TAG2, MPI_COMM_WORLD, &req[2] );
-    MPI_Irecv( recv_buf2, buf_size, MPI_FLOAT, INDEX[1], TAG2, MPI_COMM_WORLD, &req[3] );
-    MPI_Waitall( 4, req, stat );
-    
-    if ((BOUNDARY) || (POS[1]!=NPROCX-1)){	/* no boundary exchange at right edge of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-           for (j=1;j<=NY;j++){
-           for (l=1;l<fdo-1;l++) { sxy[j][NX+l] = recv_buf[n]; n++; }}
-           for (j=1;j<=NY;j++){
-           for (l=1;l<fdo;l++) { sxx[j][NX+l] = recv_buf[n]; n++; }} }
-         
-       if (WAVETYPE==2 || WAVETYPE==3) {
-           for (j=1;j<=NY;j++){
-           for (l=1;l<fdo-1;l++) { sxz[j][NX+l] = recv_buf[n]; n++; }} }}
-    
-    if ((BOUNDARY) || (POS[1]!=0)){	/* no boundary exchange at left edge of global grid */
-       n = 0;
-       if (WAVETYPE==1 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo;l++) { sxy[j][1-l] = recv_buf2[n]; n++; }} 
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo-1;l++) { sxx[j][1-l] = recv_buf2[n]; n++; }} }
-                
-       if (WAVETYPE==2 || WAVETYPE==3) {
-          for (j=1;j<=NY;j++){
-          for (l=1;l<fdo;l++) { sxz[j][1-l] = recv_buf2[n]; n++; }} }}
 
-    free( send_buf );
-    free( send_buf2 );
-    free( recv_buf );
-    free( recv_buf2 );
-    return;
+	/*if (LOG)
+	if (MYID==0) time1=MPI_Wtime();*/
+
+	/* top-bottom -----------------------------------------------------------*/	
+	
+	if (POS[2]!=0)	/* no boundary exchange at top of global grid */
+	for (i=1;i<=NX;i++){
+		for (k=1;k<=NZ;k++){
+
+			/* storage of top of local volume into buffer */
+                        n=1;
+			for (l=1;l<=(FDORDER/2);l++){
+			buffertop_to_bot[i][k][n++]  = syy[l][i][k];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			buffertop_to_bot[i][k][n++]  = sxy[l][i][k];
+			buffertop_to_bot[i][k][n++]  = syz[l][i][k];
+			}
+			
+		}
+	}
+
+
+	if (POS[2]!=NPROCY-1)	/* no boundary exchange at bottom of global grid */
+	for (i=1;i<=NX;i++){
+		for (k=1;k<=NZ;k++){
+
+			
+			/* storage of bottom of local volume into buffer */
+                        n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			bufferbot_to_top[i][k][n++]  = sxy[NY-l+1][i][k];
+			bufferbot_to_top[i][k][n++]  = syz[NY-l+1][i][k];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			bufferbot_to_top[i][k][n++]  = syy[NY-l+1][i][k];
+			}
+			
+		}
+	}
+
+
+	/* persistent communication see comm_ini.c*/
+	/*for (i=4;i<=5;i++){*/
+		/* send and reveive values at edges of the local grid */
+		/*MPI_Start(&req_send[i]);
+		MPI_Wait(&req_send[i],&status);
+		MPI_Start(&req_rec[i]);
+		MPI_Wait(&req_rec[i],&status);
+	}*/			
+	
+	
+	MPI_Bsend(&buffertop_to_bot[1][1][1],NX*NZ*nf2,MPI_FLOAT,INDEX[3],TAG5,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&buffertop_to_bot[1][1][1], NX*NZ*nf2,MPI_FLOAT,INDEX[4],TAG5,MPI_COMM_WORLD,&status);
+	MPI_Bsend(&bufferbot_to_top[1][1][1],NX*NZ*nf1,MPI_FLOAT,INDEX[4],TAG6,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&bufferbot_to_top[1][1][1], NX*NZ*nf1,MPI_FLOAT,INDEX[3],TAG6,MPI_COMM_WORLD,&status);  
+	
+
+
+	if (POS[2]!=NPROCY-1)	/* no boundary exchange at bottom of global grid */
+	for (i=1;i<=NX;i++){
+		for (k=1;k<=NZ;k++){
+		
+		        n=1;
+			for (l=1;l<=(FDORDER/2);l++){
+			syy[NY+l][i][k] = buffertop_to_bot[i][k][n++];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			sxy[NY+l][i][k] = buffertop_to_bot[i][k][n++];
+			syz[NY+l][i][k] = buffertop_to_bot[i][k][n++];
+			}
+			
+			
+		}
+	}
+
+	if (POS[2]!=0)	/* no boundary exchange at top of global grid */
+	for (i=1;i<=NX;i++){
+		for (k=1;k<=NZ;k++){
+
+                        n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			sxy[1-l][i][k] = bufferbot_to_top[i][k][n++];
+			syz[1-l][i][k] = bufferbot_to_top[i][k][n++];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			syy[1-l][i][k] = bufferbot_to_top[i][k][n++];
+			}
+			
+		}
+	}
+
+
+
+	
+
+	
+	/* left-right -----------------------------------------------------------*/	
+	
+	
+
+	if ((BOUNDARY) || (POS[1]!=0))	/* no boundary exchange at left edge of global grid */
+	for (j=1;j<=NY;j++){
+		for (k=1;k<=NZ;k++){
+
+
+			/* storage of left edge of local volume into buffer */
+			n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			bufferlef_to_rig[j][k][n++] =  sxx[j][l][k];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			bufferlef_to_rig[j][k][n++] =  sxy[j][l][k];
+			bufferlef_to_rig[j][k][n++] =  sxz[j][l][k];
+                        }
+		}
+	}
+
+
+	if ((BOUNDARY) || (POS[1]!=NPROCX-1))	/* no boundary exchange at right edge of global grid */
+	for (j=1;j<=NY;j++){
+		for (k=1;k<=NZ;k++){
+			/* storage of right edge of local volume into buffer */
+			n=1;
+			
+			for (l=1;l<=(FDORDER/2);l++){
+			bufferrig_to_lef[j][k][n++] =  sxy[j][NX-l+1][k];
+			bufferrig_to_lef[j][k][n++] =  sxz[j][NX-l+1][k];
+                        }
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			bufferrig_to_lef[j][k][n++] =  sxx[j][NX-l+1][k];
+			}
+		}
+	}
+
+
+	/* persistent communication see comm_ini.c*/
+	/*for (i=0;i<=1;i++){*/
+		/* send and reveive values at edges of the local grid */
+		/*MPI_Start(&req_send[i]);
+		MPI_Wait(&req_send[i],&status);
+		MPI_Start(&req_rec[i]);
+		MPI_Wait(&req_rec[i],&status);
+	}*/			
+	
+ 	
+	
+	MPI_Bsend(&bufferlef_to_rig[1][1][1],NY*NZ*nf2,MPI_FLOAT,INDEX[1],TAG1,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&bufferlef_to_rig[1][1][1], NY*NZ*nf2,MPI_FLOAT,INDEX[2],TAG1,MPI_COMM_WORLD,&status);
+	MPI_Bsend(&bufferrig_to_lef[1][1][1],NY*NZ*nf1,MPI_FLOAT,INDEX[2],TAG2,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&bufferrig_to_lef[1][1][1], NY*NZ*nf1,MPI_FLOAT,INDEX[1],TAG2,MPI_COMM_WORLD,&status);
+	
+
+
+
+
+
+	if ((BOUNDARY) || (POS[1]!=NPROCX-1))	/* no boundary exchange at right edge of global grid */
+	for (j=1;j<=NY;j++){
+		for (k=1;k<=NZ;k++){
+
+			n=1;
+			for (l=1;l<=(FDORDER/2);l++){
+			sxx[j][NX+l][k] = bufferlef_to_rig[j][k][n++];
+		        }
+			
+		        for (l=1;l<=(FDORDER/2-1);l++){
+			sxy[j][NX+l][k] = bufferlef_to_rig[j][k][n++];
+			sxz[j][NX+l][k] = bufferlef_to_rig[j][k][n++];
+			}
+		}
+	}
+
+	if ((BOUNDARY) || (POS[1]!=0))	/* no boundary exchange at left edge of global grid */
+	for (j=1;j<=NY;j++){
+		for (k=1;k<=NZ;k++){
+		
+		        n=1;
+			for (l=1;l<=(FDORDER/2);l++){
+			sxy[j][1-l][k] = bufferrig_to_lef[j][k][n++];
+			sxz[j][1-l][k] = bufferrig_to_lef[j][k][n++];
+		        }
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			sxx[j][1-l][k] = bufferrig_to_lef[j][k][n++];
+			}
+		}
+	}
+	
+	
+	
+
+	
+	
+		/* front-back -----------------------------------------------------------*/	
+	if ((BOUNDARY) || (POS[3]!=0))	/* no boundary exchange at front side of global grid */
+	for (i=1;i<=NX;i++){
+		for (j=1;j<=NY;j++){
+
+
+			/* storage of front side of local volume into buffer */
+			n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			bufferfro_to_bac[j][i][n++]  = szz[j][i][l];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			bufferfro_to_bac[j][i][n++]  =  syz[j][i][l];
+			bufferfro_to_bac[j][i][n++]  =  sxz[j][i][l];
+			}
+		}
+	}
+
+
+	if ((BOUNDARY) || (POS[3]!=NPROCZ-1))	/* no boundary exchange at back side of global grid */
+	for (i=1;i<=NX;i++){
+		for (j=1;j<=NY;j++){
+			
+			/* storage of back side of local volume into buffer */
+			n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			bufferbac_to_fro[j][i][n++]  = syz[j][i][NZ-l+1];
+			bufferbac_to_fro[j][i][n++]  = sxz[j][i][NZ-l+1];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			bufferbac_to_fro[j][i][n++]  = szz[j][i][NZ-l+1];
+			}
+		}
+	}
+
+
+	/* persistent communication see comm_ini.c*/
+	/*for (i=2;i<=3;i++){*/
+		/* send and reveive values at edges of the local grid */
+		/*MPI_Start(&req_send[i]);
+		MPI_Wait(&req_send[i],&status);
+		MPI_Start(&req_rec[i]);
+		MPI_Wait(&req_rec[i],&status);
+	}*/			
+
+	
+	MPI_Bsend(&bufferfro_to_bac[1][1][1],NX*NY*nf2,MPI_FLOAT,INDEX[5],TAG3,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&bufferfro_to_bac[1][1][1], NX*NY*nf2,MPI_FLOAT,INDEX[6],TAG3,MPI_COMM_WORLD,&status);
+	MPI_Bsend(&bufferbac_to_fro[1][1][1],NX*NY*nf1,MPI_FLOAT,INDEX[6],TAG4,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Recv(&bufferbac_to_fro[1][1][1], NX*NY*nf1,MPI_FLOAT,INDEX[5],TAG4,MPI_COMM_WORLD,&status);
+
+
+
+	if ((BOUNDARY) || (POS[3]!=NPROCZ-1))	/* no boundary exchange at back side of global grid */
+	for (i=1;i<=NX;i++){
+		for (j=1;j<=NY;j++){
+
+                        n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			szz[j][i][NZ+l] = bufferfro_to_bac[j][i][n++];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			syz[j][i][NZ+l] = bufferfro_to_bac[j][i][n++];
+			sxz[j][i][NZ+l] = bufferfro_to_bac[j][i][n++];
+                        }
+		}
+	}
+
+
+	if ((BOUNDARY) || (POS[3]!=0))	/* no boundary exchange at front side of global grid */
+	for (i=1;i<=NX;i++){
+		for (j=1;j<=NY;j++){
+			
+                        n=1;
+			for (l=1;l<=FDORDER/2;l++){
+			syz[j][i][1-l] = bufferbac_to_fro[j][i][n++];
+			sxz[j][i][1-l] = bufferbac_to_fro[j][i][n++];
+			}
+			
+			for (l=1;l<=(FDORDER/2-1);l++){
+			szz[j][i][1-l] = bufferbac_to_fro[j][i][n++];
+			}
+
+		}
+	}
+
+	/*if (LOG)
+	if (MYID==0){
+		time2=MPI_Wtime();
+		time=time2-time1;
+		fprintf(FP," Real time for stress tensor exchange: \t\t %4.2f s.\n",time);
+	}*/
+	return time;
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

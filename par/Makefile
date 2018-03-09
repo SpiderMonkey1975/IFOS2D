@@ -1,4 +1,4 @@
-default: ../ IFOS2D
+default: ../ IFOS3D
 
 .PHONY: aff
 aff: 
@@ -18,20 +18,14 @@ libcseife:
 
 
 .PHONY: IFOS2D 
-IFOS2D: aff fourier stfinv libcseife
-	mkdir -p ../bin
-	$(MAKE) -C ../src/ IFOS2D
-#ifeq ($(G717),1) 
-#	rm -rf ../genmod/G717_elastic.o	
-#	$(MAKE) -C ../src/ IFOS2D G717=2 
-#endif
+IFOS3D: aff fourier stfinv libcseife
+	$(MAKE) -C ../src/ IFOS3D
 
 .PHONY: install
-install: clean-bin IFOS2D
+install: clean-bin IFOS3D
 
 .PHONY: clean
 clean: 
-	rm -rf ../bin/*
 	rm -rf ../contrib/bin/*.a
 	$(MAKE) -C ../contrib/aff clean
 	$(MAKE) -C ../contrib/fourier clean
@@ -44,4 +38,4 @@ clean-bin:
 	rm -rf ../bin/*
 
 .PHONY: reinstall
-reinstall: clean IFOS2D
+reinstall: clean IFOS3D

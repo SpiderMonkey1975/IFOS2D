@@ -1,0 +1,48 @@
+250	20	150	0	200	1
+250	25	150	0	200	1
+250	30	150	0	200	1
+250	35	150	0	200	1
+250	40	150	0	200	1
+250	45	150	0	200	1
+250	50	150	0	200	1
+250	55	150	0	200	1
+250	60	150	0	200	1
+250	65	150	0	200	1
+250	70	150	0	200	1
+250	75	150	0	200	1
+250	80	150	0	200	1
+250	85	150	0	200	1
+250	90	150	0	200	1
+250	95	150	0	200	1
+250	100	150	0	200	1
+250	105	150	0	200	1
+250	110	150	0	200	1
+250	115	150	0	200	1
+250	120	150	0	200	1
+250	125	150	0	200	1
+250	130	150	0	200	1
+250	135	150	0	200	1
+250	140	150	0	200	1
+250	145	150	0	200	1
+
+
+
+%
+% Definition of (distributed) source positions: 
+% position, time-delay, centre frequency, and amplitude
+%
+% (comment line is indicated by # as first character)
+%
+% Parameters for each source node (one source node per line):
+%
+%  NSRC (one separateline)
+% 	XSRC		YSRC		ZSRC		TD		FC		AMP
+%
+% Symbols: 
+% XSRC= x-coordinate of source point [meter]
+% YSRC= y-coordinate of source point [meter] (vertical)
+% ZSRC= z-coordinate of source point [meter] 
+% TD= excitation time (time-delay) for source node [s]
+% FC= centre frequency of source signal [Hz]
+% AMP= maximum amplitude of source signal
+
