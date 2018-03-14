@@ -43,7 +43,7 @@
 
 namespace fourier {
 
-  const double Filter::pi;
+  constexpr double Filter::pi;
   const Filter::Tcvalue Filter::ime=Tcvalue(0.,1.);
 
   /*----------------------------------------------------------------------*/
