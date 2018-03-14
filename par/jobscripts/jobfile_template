@@ -1,0 +1,29 @@
+#!/bin/bash 
+##
+## Job file for running IFOS2D  
+##=========================================================
+
+#
+# Set the runtime environment
+#-----------------------------
+
+#
+# Setup the simulation output directory
+#---------------------------------------
+if [ -d WORKDIR ]; then
+   rm -rf WORKDIR 
+fi
+
+mkdir -p WORKDIR/jacobian
+mkdir -p WORKDIR/measured_data
+mkdir -p WORKDIR/model
+
+#
+# Run the forward-only simulation 
+#---------------------------------
+time RUN_CMD ../bin/IFOS2D in_and_out/EXPNAME_FW.json
+
+#
+# Run the inverse simulation
+#----------------------------
+time RUN_CMD ../bin/IFOS2D in_and_out/EXPNAME_INV.json
