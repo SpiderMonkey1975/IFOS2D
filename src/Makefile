@@ -1,23 +1,43 @@
-# Makefile for IFOS3D
+# Makefile for IFOS2D
 
 #--------------------------------------------------------
 
 CPPFLAGS=
 
-# source code for model generation (acoustic)
-# MODEL_SCR_A = hh_acoustic.c
-# source code for model generation (elastic)
-MODEL_SCR = hh_toy_true.c
+# Check if a G7171 production run has been requested
+
+ifeq ($(G717),1)
+g717_run=1
+endif
+ifeq ($(G717),2)
+g717_run=1
+endif
+
+# source code for model generation
+
+MODEL = ../genmod/1D_linear_gradient_visc.c
+MODEL_AC = ../genmod/1D_linear_gradient_ac.c
+ifeq ($(g717_run),1)
+MODEL_EL = ../genmod/G717_elastic.c
+else
+MODEL_EL = ../genmod/1D_linear_gradient_el.c
+endif
+MODEL_VAC = ../genmod/1D_linear_gradient_viscac.c
+MODEL_TEST = ../genmod/test.c
 
 # Set name of executable
 
-EXEC = ../bin/IFOS3D
+EXEC = ../bin/IFOS2D
+ifeq ($(G717),2)
+EXEC = ../bin/IFOS2Dinv
+CPPFLAGS+=-DG717_INVERSE 
+endif
 
 ## Check if user wishes to disable the use of parallel IO
 
-#ifneq ($(SERIAL_IO),1)
-#  CPPFLAGS+=-DMPIIO
-#endif
+ifneq ($(SERIAL_IO),1)
+  CPPFLAGS+=-DMPIIO
+endif
 
 
 # after this line, no further editing should be necessary
@@ -25,7 +45,11 @@ EXEC = ../bin/IFOS3D
 
 include ../contrib/compilers/compiler.inc
 
-LFLAGS=-lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
+LFLAGS=
+ifeq ($(NONCRAY),1)
+  LFLAGS+=-L${FFTW_LIB} 
+endif
+LFLAGS+= -lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
 
@@ -45,115 +69,144 @@ endif
 
 SNAPMERGE_OBJ = $(SNAPMERGE_SCR:%.c=%.o)
 
+IFOS_OBJ = $(IFOS2D:%.c=%.o)
+
 # -------------
 # Dependencies
 # -------------
 
 SNAPMERGE_SCR = \
-        snapmerge.c \
-        merge.c \
-        json_parser.c \
-        read_par_json.c \
-        readdsk.c \
-        writedsk.c \
-        util.c
-
-PARTMODEL_SCR = \
-        part_model.c \
-        read_par_json.c \
-        util.c
+	snapmerge.c \
+	merge.c \
+	json_parser.c \
+	read_par_json.c \
+	readdsk.c \
+	writedsk.c \
+	util.c 
 
 
-IFOS_UTIL = \
-                absorb.c \
-                av_mat.c \
-                comm_ini.c \
-                info.c \
-                initproc.c \
-                merge.c \
-                mergemod.c \
-                note.c \
-                outseis.c \
-                output_source_signal.c \
-                rd_sour.c \
-                readdsk.c \
-                json_parser.c \
-                read_par_json.c \
-                exchange_par.c \
-                receiver.c \
-                readmod.c \
-                saveseis.c \
-                sources.c \
-                splitrec.c \
-                splitsrc.c \
-                util.c \
-                wavelet.c \
-                writedsk.c \
-                writemod.c \
-                writepar.c
-
-IFOS_SRC = \
-                ifos3d.c \
-                comm_ini_s.c \
-                checkfd_ssg.c \
-                CPML_coeff.c \
-                CPML_ini_elastic.c\
-                seismo_ssg.c \
-                matcopy.c \
-                surface_ssg.c \
-                surface_ssg_elastic.c\
-                update_s_ssg.c \
-                update_s_ssg_CPML.c \
-                update_s_ssg_elastic.c \
-                update_s_ssg_CPML_elastic.c \
-                update_v_ssg.c \
-                update_v_ssg_CPML.c \
-                snap_ssg.c \
-                exchange_v.c \
-                exchange_s.c \
-                psource.c \
-                readseis.c \
-                readseis_split.c \
-                residual.c \
-                zero_wavefield.c \
-                gradient_F.c \
-                conjugategrad.c \
-                hess_F.c \
-                readhess.c \
-                modelupdate.c \
-                zero_invers.c \
-                zero_grad.c \
-                precongrad.c \
-                hess_apply.c \
-                outgrad.c \
-                outmod.c \
-                steplength.c \
-                cpmodel.c \
-                readinv.c \
-                disc_fourier.c \
-                exchange_Fv.c \
-                filt_seis.c \
-                model2_5D.c \
-                smooth.c \
-                lbfgs.c \
-                lbfgs_save.c \
-                constant_boundary.c \
-                $(MODEL_SCR) \
-                $(IFOS_UTIL)
-
-IFOS_OBJ = $(IFOS_SRC:%.c=%.o)
-IFOS_OBJ_RSG = $(IFOS_SRC_RSG:%.c=%.o)
-# FDMPI_ACOUSTIC_OBJ = $(FDMPI_ACOUSTIC_SRC:%.c=%.o)
-# SNAPMERGE_OBJ = $(SNAPMERGE_SCR:%.c=%.o)
-# PARTMODEL_OBJ = $(PARTMODEL_SCR:%.c=%.o)
-# SEISMERGE_OBJ = $(SEISMERGE_SCR:%.c=%.o)
-
+IFOS2D= \
+	IFOS2D.c \
+	stf.c \
+	window_cos.c \
+	alloc_sections.c \
+	calc_mat_change_test.c \
+    	calc_res.c \
+	calc_misfit.c \
+    	calc_opt_step.c \
+	calc_energy.c \
+	checkfd.c \
+	checkfd_ssg_elastic.c \
+	checkfd_ssg_visc.c \
+	conv_FD.c \
+	count_killed_traces.c \
+	psource.c \
+	holbergcoeff.c\
+	exchange_v.c \
+	exchange_s.c \
+	exchange_p.c \
+	snap_ssg.c \
+   	snap_ssg_SH.c \
+	seismo_ssg.c \
+	surface_elastic_PML.c \
+	surface_acoustic_PML.c \
+	surface_PML.c \
+	update_v_ssg.c \
+	update_v_PML.c \
+	update_v_PML_SH.c \
+	update_v_acoustic_PML.c \
+	prepare_update_s.c \
+	update_p_PML.c \
+	update_s_elastic_ssg.c \
+	update_s_elastic_PML.c \
+    	update_s_elastic_PML_SH.c \
+	update_s_visc_PML.c \
+    	update_s_visc_PML_SH.c \
+	av_mue.c \
+	av_rho.c \
+	av_tau.c \
+	median2D.c \
+	exchange_par.c \
+	info.c \
+	inseis.c \
+	inseis_source_wavelet.c \
+	initproc.c \
+	interpol.c \
+	json_parser.c \
+	LBFGS.c \
+	smooth.c \
+	$(MODEL) \
+	$(MODEL_AC) \
+	$(MODEL_EL) \
+    	$(MODEL_VAC) \
+	matcopy.c \
+	matcopy_elastic.c \
+	matcopy_acoustic.c \
+	mergemod.c \
+	mergemod_par.c \
+	max_grad.c \
+	note.c \
+	norm.c \
+	outseis_vector.c \
+	outseis_glob.c \
+	catseis.c \
+	output_source_signal.c \
+	PCG.c \
+	PCG_SH.c \
+	PML_pro.c \
+	readdsk.c \
+	read_par_json.c \
+	readmod.c \
+	readmod_elastic.c \
+	readmod_acoustic.c \
+    	receiver.c \
+	rd_sour.c \
+    	read_workflow.c \
+    	apply_workflow.c \
+	saveseis_glob.c \
+	sources.c \
+	solvelin.c \
+	spat_filt.c \
+	splitsrc.c \
+	splitsrc_back.c \
+	splitrec.c \
+	stalta.c \
+	taper.c \
+	taper_grad.c \
+	taper_grad_shot.c \
+	timedomain_filt.c \
+	timedomain_filt_vector.c \
+	time_window.c \
+	util.c \
+	wavelet.c \
+	wavelet_stf.c \
+	writemod.c \
+	write_par.c \
+	writedsk.c \
+	zero_fdveps.c \
+	zero_fdveps_ac.c \
+	zero_fdveps_visc.c \
+	calc_envelope.c \
+    	joint_inversion.c \
+    	matrix_operations.c \
+    	wolfe_condition.c \
+    	calc_hilbert.c \
+	eprecond.c \
+	eprecond1.c \
+    	zero_fdveps_viscac.c \
+    	update_p_visc_PML.c \
+    	matcopy_viscac.c \
+    	prepare_update_p.c \
+    	readmod_viscac.c \
+    	time_window_glob.c \
+    	create_trkill_table.c \
+    	filter_frequencies.c
 
 # -------------
-# Targets
+# Targes
 # -------------
 
-IFOS3D:	$(IFOS_OBJ) 
+IFOS2D:		$(IFOS_OBJ) fd.h
 	$(CC) $(SFLAGS) $(IFOS_OBJ) -o $(EXEC) $(LFLAGS)
 
 all: IFOS2D snapmerge
@@ -161,18 +214,14 @@ all: IFOS2D snapmerge
 snapmerge:	$(SNAPMERGE_OBJ)
 	$(CC) $(SFLAGS) $(SNAPMERGE_OBJ) -o ../bin/snapmerge $(LFLAGS)
 
-seismerge:      $(SEISMERGE_OBJ)
-	$(CC) $(LFLAGS) $(SEISMERGE_OBJ) -o ../bin/seismerge
-
-# part_model:   $(PARTMODEL_OBJ)
-#       $(CC) $(LFLAGS) $(PARTMODEL_OBJ) -o ../bin/partmodel
-
 .PHONY: clean
 clean:
 	find . -name "*.d" -exec rm {} \;
 	find . -name "*.o" -exec rm {} \; 
 	find . -name "*.c%" -exec rm {} \;
 	find . -name "*.bck" -exec rm {} \;
+	find ../genmod -name "*.o" -exec rm {} \;
+	find ../genmod -name "*.d" -exec rm {} \;
 
 install: clean all
 

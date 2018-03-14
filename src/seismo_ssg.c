@@ -1,129 +1,140 @@
-/*------------------------------------------------------------------------
- * Copyright (C) 2015 For the list of authors, see file AUTHORS.
+/*-----------------------------------------------------------------------------------------
+ * Copyright (C) 2016  For the list of authors, see file AUTHORS.
  *
- * This file is part of IFOS3D.
+ * This file is part of IFOS.
  * 
- * IFOS3D is free software: you can redistribute it and/or modify
+ * IFOS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 2.0 of the License only.
  * 
- * IFOS3D is distributed in the hope that it will be useful,
+ * IFOS is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with IFOS3D. See file COPYING and/or 
- * <http://www.gnu.org/licenses/gpl-2.0.html>.
---------------------------------------------------------------------------*/
+ * along with IFOS. See file COPYING and/or <http://www.gnu.org/licenses/gpl-2.0.html>.
+-----------------------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
- *   store amplitudes (particle velocities or pressure) at receiver positions
-     in arrays
+ *   store amplitudes (particle velocities or pressure or curl and div) 
+ *    at receiver positions in arrays
  *  ----------------------------------------------------------------------*/
 
 #include "fd.h"
 
-void seismo(int lsamp, int ntr, int **recpos, float **sectionvx, float **sectionvy, 
-float **sectionvz, float **sectiondiv, float **sectioncurl, float **sectionp, 
-float ***vx, float ***vy, float ***vz, 
-float ***sxx, float ***syy, float ***szz, float ***pi, float ***u){ 
-		
-	extern int SEISMO; 
-	int i, j, k, itr, ins, nxrec, nyrec, nzrec;
-	float amp, dh24x, dh24y, dh24z, vyx, vxy, vxx, vyy, vzx, vyz, vxz, vzy, vzz;
-	extern float DX, DY, DZ;
+void seismo_ssg(int lsamp, int ntr, int **recpos, float **sectionvx,
+                float **sectionvy,float **sectionvz, float **sectionp, float **sectioncurl, float **sectiondiv,
+                float **vx, float **vy, float **vz, float **sxx, float **syy, float **sp, float **pi, float **u, float *hc){
+    
+    extern int NDT, SEISMO, FDORDER, ACOUSTIC,WAVETYPE;
+    extern float DH, DT;
+    extern FILE *FP;
+    int i,j, itr, ins, nxrec, nyrec, m, fdoh;
+    float dh24, dhi, vxx, vyy, vxy, vyx;
+    
+    
+    dh24=1.0/(DH*24.0);
+    fdoh = FDORDER/2;
+    dhi = DT/DH;
+    
+    /*ins=lsamp/NDT;*/
+    ins=lsamp;
+    for (itr=1;itr<=ntr;itr++){
+        nxrec=recpos[1][itr];
+        nyrec=recpos[2][itr];
+        switch (SEISMO){
+            case 1 :
+                if (WAVETYPE==1 || WAVETYPE==3) {
+                    sectionvx[itr][ins]=vx[nyrec][nxrec];
+                    sectionvy[itr][ins]=vy[nyrec][nxrec];
+                }
+                if (WAVETYPE==2 || WAVETYPE==3) {
+                    sectionvz[itr][ins]=vz[nyrec][nxrec];
+                }
+                break;
+                
+            case 2 :
+                if(!ACOUSTIC)
+                    sectionp[itr][ins]=-sxx[nyrec][nxrec]-syy[nyrec][nxrec];
+                else
+                    sectionp[itr][ins]=-sp[nyrec][nxrec];
+                break;
+                
+            case 3 :
+                i=nxrec; j=nyrec;
+                
+                vxx = 0;
+                vyy = 0;
+                vyx = 0;
+                vxy = 0;
+                for (m=1; m<=fdoh; m++) {
+                    vxx += hc[m]*(vx[j][i+m-1] -vx[j][i-m]  );
+                    vyy += hc[m]*(vy[j+m-1][i] -vy[j-m][i]  );
+                    vyx += hc[m]*(vy[j][i+m]   -vy[j][i-m+1]);
+                    vxy += hc[m]*(vx[j+m][i]   -vx[j-m+1][i]);
+                }
+                vxx *= dhi;
+                vyy *= dhi;
+                vyx *= dhi;
+                vxy *= dhi;
+                
+                sectiondiv[itr][ins]=(vxx+vyy)*sqrt(pi[j][i]);
+                if(!ACOUSTIC)
+                    sectioncurl[itr][ins]=(vxy-vyx)*sqrt(u[j][i]);
+                else
+                    sectioncurl[itr][ins]=0;
+                break;
+                
+            case 4 :
+                i=nxrec; j=nyrec;
+                
+                vxx = 0;
+                vyy = 0;
+                vyx = 0;
+                vxy = 0;
+                for (m=1; m<=fdoh; m++) {
+                    vxx += hc[m]*(vx[j][i+m-1] -vx[j][i-m]  );
+                    vyy += hc[m]*(vy[j+m-1][i] -vy[j-m][i]  );
+                    vyx += hc[m]*(vy[j][i+m]   -vy[j][i-m+1]);
+                    vxy += hc[m]*(vx[j+m][i]   -vx[j-m+1][i]);
+                }
+                vxx *= dhi;
+                vyy *= dhi;
+                vyx *= dhi;
+                vxy *= dhi;
+                
+                sectiondiv[itr][ins]=(vxx+vyy)*sqrt(pi[j][i]);
+                if(!ACOUSTIC)
+                    sectioncurl[itr][ins]=(vxy-vyx)*sqrt(u[j][i]);
+                else
+                    sectioncurl[itr][ins]=0;
+                sectionvx[itr][ins]=vx[nyrec][nxrec];
+                sectionvy[itr][ins]=vy[nyrec][nxrec];
+                if (WAVETYPE==2 || WAVETYPE==3) {
+                    sectionvz[itr][ins]=vz[nyrec][nxrec];
+                }
+                if(!ACOUSTIC)
+                    sectionp[itr][ins]=-sxx[nyrec][nxrec]-syy[nyrec][nxrec];
+                else
+                    sectionp[itr][ins]=-sp[nyrec][nxrec];
+                break;
+                
+            case 5 :
+                if (WAVETYPE==1 || WAVETYPE==3) {
+                    sectionvx[itr][ins]=vx[nyrec][nxrec];
+                    sectionvy[itr][ins]=vy[nyrec][nxrec];
+                    if(!ACOUSTIC)
+                        sectionp[itr][ins]=-sxx[nyrec][nxrec]-syy[nyrec][nxrec];
+                    else
+                        sectionp[itr][ins]=-sp[nyrec][nxrec];
+                }
+                if (WAVETYPE==2 || WAVETYPE==3) {
+                    sectionvz[itr][ins]=vz[nyrec][nxrec];
+                }
+                break;
+                
+        }
 
-
-	ins=lsamp; /* changed from "ins=lsamp/NDT;" (neccessary after correction of the buggy ns in ifos.c) */
-	dh24x=1.0/DX;
-	dh24y=1.0/DY;
-	dh24z=1.0/DZ;
-	
-	for (itr=1;itr<=ntr;itr++){
-		nxrec=recpos[1][itr];
-		nyrec=recpos[2][itr];
-		nzrec=recpos[3][itr];
-		sectionvx[itr][ins]=0.0;
-		sectionvy[itr][ins]=0.0;
-		sectionvz[itr][ins]=0.0;
-		switch (SEISMO){                          
-		case 1 : sectionvx[itr][ins]=vx[nyrec][nxrec][nzrec];
-			 sectionvy[itr][ins]=vy[nyrec][nxrec][nzrec];
-			 sectionvz[itr][ins]=vz[nyrec][nxrec][nzrec]; 
-			 break;
-		case 2 : sectionp[itr][ins]=-sxx[nyrec][nxrec][nzrec]
-					-syy[nyrec][nxrec][nzrec]
-					-szz[nyrec][nxrec][nzrec];
-			 break;
-		case 3 :				
-			i=nxrec; j=nyrec; k=nzrec;
-			/*vxy=(-vx[j+2][i][k]+27.0*(vx[j+1][i][k]-vx[j][i][k])+vx[j-1][i][k])*(24.0*DY);
-			vxz=(-vx[j][i][k+2]+27.0*(vx[j][i][k+1]-vx[j][i][k])+vx[j][i][k-1])*(24.0*DZ);
-			vyx=(-vy[j][i+2][k]+27.0*(vy[j][i+1][k]-vy[j][i][k])+vy[j][i-1][k])*(24.0*DX);
-			vyz=(-vy[j][i][k+2]+27.0*(vy[j][i][k+1]-vy[j][i][k])+vy[j][i][k-1])*(24.0*DZ);
-			vzx=(-vz[j][i+2][k]+27.0*(vz[j][i+1][k]-vz[j][i][k])+vz[j][i-1][k])*(24.0*DX);
-			vzy=(-vz[j+2][i][k]+27.0*(vz[j+1][i][k]-vz[j][i][k])+vz[j-1][i][k])*(24.0*DY);*/
-			
-			vxy=(vx[j+1][i][k]-vx[j][i][k])*(dh24y);
-		        vxz=(vx[j][i][k+1]-vx[j][i][k])*(dh24z);
-			vyx=(vy[j][i+1][k]-vy[j][i][k])*(dh24x);
-			vyz=(vy[j][i][k+1]-vy[j][i][k])*(dh24z);
-			vzx=(vz[j][i+1][k]-vz[j][i][k])*(dh24x);
-			vzy=(vz[j+1][i][k]-vz[j][i][k])*(dh24y);
-			
-			amp=u[j][i][k]*((vyz-vzy)*fabs(vyz-vzy)+
-					    (vzx-vxz)*fabs(vzx-vxz)+(vxy-vyx)*fabs(vxy-vyx));
-			sectioncurl[itr][ins]=fsign(amp)*sqrt(fabs(amp));
-
-			/*vxx=(-vx[j][i+1][k]+27.0*(vx[j][i][k]-vx[j][i-1][k])+vx[j][i-2][k])*(24.0*DX);
-			vyy=(-vy[j+1][i][k]+27.0*(vy[j][i][k]-vy[j-1][i][k])+vy[j-2][i][k])*(24.0*DY);
-			vzz=(-vz[j][i][k+1]+27.0*(vz[j][i][k]-vz[j][i][k-1])+vz[j][i][k-2])*(24.0*DZ);*/
-			
-			vxx=(vx[j][i][k]-vx[j][i-1][k])*(dh24x);
-			vyy=(vy[j][i][k]-vy[j-1][i][k])*(dh24y);
-			vzz=(vz[j][i][k]-vz[j][i][k-1])*(dh24z);
-			
-			sectiondiv[itr][ins]=(vxx+vyy+vzz)*sqrt(pi[j][i][k]);
-
-			break;
-		case 4 :				
-
-			sectionvx[itr][ins]=vx[nyrec][nxrec][nzrec];
-			sectionvy[itr][ins]=vy[nyrec][nxrec][nzrec];
-			sectionvz[itr][ins]=vz[nyrec][nxrec][nzrec]; 
-			sectionp[itr][ins]=-sxx[nyrec][nxrec][nzrec]-syy[nyrec][nxrec][nzrec]-szz[nyrec][nxrec][nzrec];
-			i=nxrec; j=nyrec; k=nzrec;
-			
-			/*vxy=(-vx[j+2][i][k]+27.0*(vx[j+1][i][k]-vx[j][i][k])+vx[j-1][i][k])*(dh24y);
-			vxz=(-vx[j][i][k+2]+27.0*(vx[j][i][k+1]-vx[j][i][k])+vx[j][i][k-1])*(dh24z);
-			vyx=(-vy[j][i+2][k]+27.0*(vy[j][i+1][k]-vy[j][i][k])+vy[j][i-1][k])*(dh24x);
-			vyz=(-vy[j][i][k+2]+27.0*(vy[j][i][k+1]-vy[j][i][k])+vy[j][i][k-1])*(dh24z);
-			vzx=(-vz[j][i+2][k]+27.0*(vz[j][i+1][k]-vz[j][i][k])+vz[j][i-1][k])*(dh24x);
-			vzy=(-vz[j+2][i][k]+27.0*(vz[j+1][i][k]-vz[j][i][k])+vz[j-1][i][k])*(dh24y);*/
-			
-			vxy=(vx[j+1][i][k]-vx[j][i][k])*(dh24y);
-		        vxz=(vx[j][i][k+1]-vx[j][i][k])*(dh24z);
-			vyx=(vy[j][i+1][k]-vy[j][i][k])*(dh24x);
-			vyz=(vy[j][i][k+1]-vy[j][i][k])*(dh24z);
-			vzx=(vz[j][i+1][k]-vz[j][i][k])*(dh24x);
-			vzy=(vz[j+1][i][k]-vz[j][i][k])*(dh24y);
-			
-			amp=u[j][i][k]*((vyz-vzy)*fabs(vyz-vzy)+
-					    (vzx-vxz)*fabs(vzx-vxz)+(vxy-vyx)*fabs(vxy-vyx));
-			sectioncurl[itr][ins]=fsign(amp)*sqrt(fabs(amp));
-
-			/*vxx=(-vx[j][i+1][k]+27.0*(vx[j][i][k]-vx[j][i-1][k])+vx[j][i-2][k])*(dh24x);
-			vyy=(-vy[j+1][i][k]+27.0*(vy[j][i][k]-vy[j-1][i][k])+vy[j-2][i][k])*(dh24y);
-			vzz=(-vz[j][i][k+1]+27.0*(vz[j][i][k]-vz[j][i][k-1])+vz[j][i][k-2])*(dh24z);*/
-			
-			vxx=(vx[j][i][k]-vx[j][i-1][k])*(dh24x);
-			vyy=(vy[j][i][k]-vy[j-1][i][k])*(dh24y);
-			vzz=(vz[j][i][k]-vz[j][i][k-1])*(dh24z);
-			
-			sectiondiv[itr][ins]=(vxx+vyy+vzz)*sqrt(pi[j][i][k]);
-			break;
-			 		 
-		}
 	}
 }

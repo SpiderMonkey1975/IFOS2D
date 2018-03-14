@@ -1,24 +1,25 @@
-/*------------------------------------------------------------------------
- * Copyright (C) 2015 For the list of authors, see file AUTHORS.
+/*-----------------------------------------------------------------------------------------
+ * Copyright (C) 2016  For the list of authors, see file AUTHORS.
  *
- * This file is part of IFOS3D.
+ * This file is part of IFOS.
  * 
- * IFOS3D is free software: you can redistribute it and/or modify
+ * IFOS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 2.0 of the License only.
  * 
- * IFOS3D is distributed in the hope that it will be useful,
+ * IFOS is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with IFOS3D. See file COPYING and/or 
- * <http://www.gnu.org/licenses/gpl-2.0.html>.
---------------------------------------------------------------------------*/
+ * along with IFOS. See file COPYING and/or <http://www.gnu.org/licenses/gpl-2.0.html>.
+-----------------------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
  *   Write one single amplitude on disk                                   
+ *
+ *  See COPYING file for copying and redistribution conditions.
  *  ----------------------------------------------------------------------*/
 
 #include "fd.h"
@@ -32,28 +33,33 @@ format=3  :  BINARY (IEEE)
 
 
 void writedsk(FILE *fp_out, float amp, int format){
-extern FILE *FP;
+
+#ifdef _CRAY1     
+	float ampc;
+	int type=2, num=1, bitoff=0, stride=1, ierr;
+#endif
 
 
 	switch(format){
-                case 1 : /* SU*/ 
-                        err(" Sorry, SU-format for snapshots not implemented yet. \n");
-                        break;
-		case 2 :  /*ASCII*/
-                        fprintf(fp_out,"%e\n", amp); 
-                        break;
-		case 3 :   /* BINARY */
-fwrite(&amp, sizeof(float), 1, fp_out);
-			
-              		break;
-			
-		case 4 :   /* BINARY Gradient*/
+	case 1 : /* SU*/
 
-			fwrite(&amp, sizeof(float), 1, fp_out);
-              		break;	
-	                
-		default :
-			fprintf(FP," Don't know the format for the snapshot-data !\n");
-			err(" No output was written. ");
+		declare_error(" Sorry, SU-format for snapshots not implemented yet. \n");
+		break;
+	case 2 :  /*ASCII*/
+		fprintf(fp_out,"%e\n", amp);
+		break;
+	case 3 :   /* BINARY */
+#ifdef _CRAY1     
+		ierr=CRAY2IEG(&type, &num, &ampc, &bitoff, 
+		    &amp,&stride);
+		fwrite(&ampc,4,1,fp_out);
+#else 
+		fwrite(&amp, sizeof(float), 1, fp_out);
+#endif
+		break;
+
+	default :
+		printf(" Don't know the format for the snapshot-data !\n");
+		declare_error(" No output was written. ");
 	}
 }

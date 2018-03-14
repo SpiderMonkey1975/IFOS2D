@@ -115,9 +115,30 @@ FFTWLIB=-lfftw3
 
 include ../compilers/compiler.inc
 
-ifeq ($(GNU_COMPILER),1)
-CPPFLAGS+=-DUSING_GCC
-endif
+#CXX=CC
+#CC=cc
+#CFLAGS=-fPIC
+#CXXFLAGS=-fPIC
+#FFLAGS=-ff2c -extend-source -nbs -fPIC
+#ifeq ($(DEBUG),1)
+#  CFLAGS+=-g -w2 -O0 -check=stack -traceback
+#  CXXFLAGS+=-g -w2 -O0 -check=stack -traceback
+#  FFLAGS+=-g -w2 -O0 -check=stack -traceback
+#else 
+#  CFLAGS+=-fast -no-ipo
+#  CXXFLAGS+=-fast -no-ipo
+#  FFLAGS+=-O3 -xAVX
+#ifeq ($(CRAYPAT),1)
+#  CFLAGS+= -debug extended
+#  CXXFLAGS+= -debug #extended
+#  FFLAGS+= -debug extended
+#endif
+#ifeq ($(ALLINEA),1)
+#  CFLAGS+= -debug extended
+#  CXXFLAGS+= -debug extended
+#  FFLAGS+= -debug extended
+#endif
+#endif
 
 LDFLAGS+=-L$(LOCLIBDIR) -fPIC
 CPPFLAGS+=-I$(LOCINCLUDEDIR) $(FLAGS)
