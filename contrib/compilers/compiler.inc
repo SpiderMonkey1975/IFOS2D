@@ -61,9 +61,8 @@ CC=mpicc
 CXX=mpicxx
 endif
 
-#FFLAGS=-fPIC -O3 -ff2c -ffixed-line-length-none -fno-backslash
-CFLAGS=-fPIC -O3 
-CXXFLAGS=-fPIC -O3 
+CFLAGS=-fPIC -O3 -mfma -mavx  
+CXXFLAGS=-fPIC -O3 -mfma -mavx -std=c++11
 
 ifeq ($(DEBUG),1)
   CFLAGS=-fPIC -g -Wall -O0 -check=stack -traceback
