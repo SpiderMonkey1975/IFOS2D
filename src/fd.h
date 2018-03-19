@@ -166,6 +166,9 @@ void merge2(int nsnap, int type);
 void mergemod(char modfile[STRING_SIZE], int format);
 void mergemod_par(char modfile[STRING_SIZE], float ** data );
 
+void parallel_hdf5_read( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data );
+void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data, int newfile, int iter );
+
 void note(FILE *fp);
 
 

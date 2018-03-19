@@ -24,16 +24,15 @@
 
 #include "fd.h"
 
-void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int ntr_glob, int iter, float C_vp, float ** gradp, int nfstart_jac, float ** waveconv_u, float C_vs, float ** gradp_u, float ** waveconv_rho, float C_rho, float ** gradp_rho, float Vs_avg, float F_LOW_PASS, int PCG_iter_start){
+void PCG( float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int ntr_glob, int iter, float C_vp, 
+          float ** gradp, int nfstart_jac, float ** waveconv_u, float C_vs, float ** gradp_u, float ** waveconv_rho, float C_rho, 
+          float ** gradp_rho, float Vs_avg, float F_LOW_PASS, int PCG_iter_start ) {
 	
-	extern int NX, NY, IDX, IDY, SPATFILTER, GRAD_FILTER;
+	extern int NX, NY, IDX, IDY, SPATFILTER, GRAD_FILTER, VERBOSE, RESTART_WORKFLOW, start_iter;
 	extern int FORWARD_ONLY, SWS_TAPER_GRAD_VERT, SWS_TAPER_GRAD_HOR, SWS_TAPER_GRAD_SOURCES, SWS_TAPER_FILE;
-	extern int POS[3], MYID, ACOUSTIC;
-	extern char JACOBIAN[STRING_SIZE];
-    extern int RESTART_WORKFLOW;
-    extern int VERBOSE;
-    extern int start_iter;
-	char jac[225], jac2[225];
+	extern int POS[3], MYID, ACOUSTIC, FDORDER;
+	extern char JACOBIAN[STRING_SIZE], SEIS_FILE[STRING_SIZE];
+	char jac[225], jac2[225], filename[225], dsetname[10];
 	int i, j;
 	float betaz, betan, gradplastiter, gradclastiter, betar, beta;
 	extern FILE *FP;
@@ -48,11 +47,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
             use_conjugate_1=0;
         }
     }
-    
+   
 	/* ========================================================================================================================= */
 	/* ========================================== GRADIENT ZP ================================================================ */
 	/* ========================================================================================================================= */
-	
+
 	if(FORWARD_ONLY==0){
 		
 		/* Preconditioning of the gradient */
@@ -74,29 +73,11 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		taper_grad(waveconv,taper_coeff,srcpos,nsrc,recpos,ntr_glob,4);}
 		
 		/* save gradient */
-#ifdef MPIIO
 		sprintf(jac,"%s_g.old",JACOBIAN);
                 mergemod_par( jac, waveconv );
-#else
-		sprintf(jac,"%s_g.old.%i.%i",JACOBIAN,POS[1],POS[2]);
-		FP3=fopen(jac,"wb");
-		
-		for (i=1;i<=NX;i=i+IDX){
-		for (j=1;j<=NY;j=j+IDY){
-		    fwrite(&waveconv[j][i],sizeof(float),1,FP3);
-		}
-		}
-			
-		fclose(FP3);
-			
-		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
-		sprintf(jac,"%s_g.old",JACOBIAN);
-		if (MYID==0) { mergemod( jac, 3 );}
-
-                sprintf(jac,"%s_g.old.%i.%i",JACOBIAN,POS[1],POS[2]);
-                remove(jac);
-#endif        
+		sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+		sprintf( dsetname, "g" );
+                parallel_hdf5_write( dsetname, filename, waveconv, 2, iter );
        
 		/* apply spatial wavelength filter */
 		if(SPATFILTER==1){
@@ -111,37 +92,15 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
 			waveconv[j][i] = C_vp * waveconv[j][i];
-			gradp[j][i]=waveconv[j][i];
-		}
-		}
+			gradp[j][i]=waveconv[j][i]; }}
 		
 		/* save gradient for output as inversion result */
-		if(iter==nfstart_jac){
-#ifdef MPIIO                        
-			sprintf(jac,"%s_p_it%d.old",JACOBIAN,iter);
-                        mergemod_par( jac, waveconv );
-#else
-			sprintf(jac,"%s_p_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			FP3=fopen(jac,"wb");
-			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv[j][i],sizeof(float),1,FP3);
-			}
-			}
-			
-			fclose(FP3);
-			
-			/* merge gradient file */ 
-			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac,"%s_p_it%d.old",JACOBIAN,iter);
-			if (MYID==0) {mergemod(jac,3); }
-                        
-                        sprintf(jac,"%s_p_it%d.old_mpi",JACOBIAN,iter);
-			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac,"%s_p_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			remove(jac);
-#endif
+		if (iter==nfstart_jac){
+		   sprintf(jac,"%s_p_it%d.old",JACOBIAN,iter);
+                   mergemod_par( jac, waveconv );
+                   sprintf( filename, "%s_jacobian_iterations.h5", SEIS_FILE );
+                   sprintf( dsetname, "p", iter );
+                   parallel_hdf5_write( dsetname, filename, waveconv, 3, iter );
 		}
 		
 		/* calculate conjugate gradient direction, if iter > 1 (after Mora 1987) */
@@ -152,23 +111,14 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			sprintf(jac,"%s_p.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP6=fopen(jac,"rb");
 			
-			if((iter>2)&&(use_conjugate_2)){
-				sprintf(jac2,"%s_c.old.%i.%i",JACOBIAN,POS[1],POS[2]);
-				FP5=fopen(jac2,"rb");
-			}
-			
 			/* apply scalar product to obtain the coefficient beta */
 			betaz = 0.0;
 			betan = 0.0;
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
 				fread(&gradplastiter,sizeof(float),1,FP6);
-				
-				/* Polak and Ribiere */
-				betaz += (gradp[j][i]) * ( (gradp[j][i]) - (gradplastiter) );
-				betan += (gradplastiter) * (gradplastiter);
-			}
-			}
+				betaz += (gradp[j][i]) * ( (gradp[j][i]) - (gradplastiter) ); 
+				betan += (gradplastiter) * (gradplastiter); }}
 			
 			betar = 0.0;
 			MPI_Allreduce(&betaz,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
@@ -183,50 +133,40 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			
 			/* direction reset */
 			if(beta<0.0){beta = 0.0;}
+ 		
+                        if ( iter==2 ) {	
+		  	   fseek(FP6,0,SEEK_SET);
+                           for (i=1;i<=NX;i=i+IDX){
+                           for (j=1;j<=NY;j=j+IDY){
+                               fread(&gradplastiter,sizeof(float),1,FP6);
+                               waveconv[j][i] = gradp[j][i] + gradplastiter * beta; }} } 
 			
-			fseek(FP6,0,SEEK_SET);
+			if ((iter>2)&&(use_conjugate_2)){
+			   sprintf(jac2,"%s_c.old.%i.%i",JACOBIAN,POS[1],POS[2]);
+			   FP5=fopen(jac2,"rb"); 
 			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				
-				if(iter==2){
-					fread(&gradplastiter,sizeof(float),1,FP6);
-					waveconv[j][i] = gradp[j][i] + gradplastiter * beta;
-				}
-				
-				if((iter>2)&&(use_conjugate_2)){
-					fread(&gradclastiter,sizeof(float),1,FP5);
-					waveconv[j][i] = gradp[j][i] + gradclastiter * beta;
-				}
-				
-			}
-			}
-			
-			fclose(FP6);
-			
-			if((iter>2)&&(use_conjugate_2)){fclose(FP5);}
-		}
+			   for (i=1;i<=NX;i=i+IDX){
+			   for (j=1;j<=NY;j=j+IDY){
+				fread(&gradclastiter,sizeof(float),1,FP5);
+				waveconv[j][i] = gradp[j][i] + gradclastiter * beta; }} 
+                            fclose(FP5);}
+                  
+                       fclose( FP6 );
 		
 		/* output of the conjugate gradient */
-		if((iter>1)&&(use_conjugate_1)){
 			sprintf(jac2,"%s_c.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP5=fopen(jac2,"wb");
 			
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv[j][i],sizeof(float),1,FP5);
-			}
-			}
+				fwrite(&waveconv[j][i],sizeof(float),1,FP5); }}
 			
 			fclose(FP5);
 			sprintf(jac2,"%s_c.old",JACOBIAN);
-#ifdef MPIIO			
                         mergemod_par( jac2, waveconv );
-#else
-			/* merge gradient file */ 
-			MPI_Barrier(MPI_COMM_WORLD);
-			if (MYID==0) { mergemod(jac2,3); }
-#endif
+                        sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                        sprintf( dsetname, "c" );
+                        parallel_hdf5_write( dsetname, filename, waveconv, -2, iter );
 		}
 		
 		/* output of preconditioned gradient */
@@ -236,19 +176,14 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		/* output of the preconditioned gradient */
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-			fwrite(&gradp[j][i],sizeof(float),1,FP4);
-		}
-		}
+			fwrite(&gradp[j][i],sizeof(float),1,FP4); }}
 		
 		fclose(FP4);
 		sprintf(jac,"%s_p.old",JACOBIAN);
-#ifdef MPIIO		
                 mergemod_par( jac, gradp );
-#else
-		/* merge gradient file */ 
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (MYID==0) { mergemod(jac,3); }
-#endif
+                sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                sprintf( dsetname, "p" );
+                parallel_hdf5_write( dsetname, filename, gradp, -2, iter );
 	}
 	
 	/* ================================================================================================================================ */
@@ -280,20 +215,16 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-			fwrite(&waveconv_u[j][i],sizeof(float),1,FP3);
-		}
-		}
+			fwrite(&waveconv_u[j][i],sizeof(float),1,FP3); }}
 			
 		fclose(FP3);
 		
 		/* merge gradient file */ 
 		sprintf(jac,"%s_g_u.old",JACOBIAN);
-#ifdef MPIIO 
 	        mergemod_par( jac, waveconv_u );	
-#else
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (MYID==0) { mergemod(jac,3); }
-#endif
+                sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                sprintf( dsetname, "g_u" );
+                parallel_hdf5_write( dsetname, filename, waveconv_u, -2, iter );
 		
 		/* apply spatial wavelength filter */
 		if(SPATFILTER==1){
@@ -308,37 +239,15 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
 			waveconv_u[j][i] = C_vs * waveconv_u[j][i];
-			gradp_u[j][i]=waveconv_u[j][i];
-		}
-		}
+			gradp_u[j][i]=waveconv_u[j][i]; }}
 		
 		/* save gradient for output as inversion result */
 		if(iter==nfstart_jac){
-#ifdef MPIIO
 			sprintf(jac,"%s_p_u_it%d.old",JACOBIAN,iter);
                         mergemod_par( jac, waveconv_u );
-#else
-			sprintf(jac,"%s_p_u_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			FP3=fopen(jac,"wb");
-			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv_u[j][i],sizeof(float),1,FP3);
-			}
-			}
-			
-			fclose(FP3);
-			
-			MPI_Barrier(MPI_COMM_WORLD);
-			
-			/* merge gradient file */ 
-			sprintf(jac,"%s_p_u_it%d.old",JACOBIAN,iter);
-			if (MYID==0) { mergemod(jac,3); }
-                        
-			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac,"%s_p_u_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			remove(jac);
-#endif
+                        sprintf( filename, "%s_jacobian_iterations.h5", SEIS_FILE );
+                        sprintf( dsetname, "p_u" );
+                        parallel_hdf5_write( dsetname, filename, waveconv_u, -3, iter );
 		}
 		
 		/* calculate conjugate gradient direction, if iter > 1 (after Mora 1987) */
@@ -349,23 +258,14 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			sprintf(jac,"%s_p_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP6=fopen(jac,"rb");
 			
-			if((iter>2)&&(use_conjugate_2)){
-				sprintf(jac2,"%s_c_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
-				FP5=fopen(jac2,"rb");
-			}
-			
 				/* apply scalar product to obtain the coefficient beta */
 			betaz = 0.0;
 			betan = 0.0;
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
 				fread(&gradplastiter,sizeof(float),1,FP6);
-				
-				/* Polak and Ribiere */
 				betaz += (gradp_u[j][i]) * ( (gradp_u[j][i]) - (gradplastiter) );
-				betan += (gradplastiter) * (gradplastiter);
-			}
-			}
+				betan += (gradplastiter) * (gradplastiter); }}
 			
 			betar = 0.0;
 			MPI_Allreduce(&betaz,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
@@ -381,51 +281,42 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			/* direction reset */
 			if(beta<0.0){beta = 0.0;}
 			
-			fseek(FP6,0,SEEK_SET);
-			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				
-				if(iter==2){
-					fread(&gradplastiter,sizeof(float),1,FP6);
-					waveconv_u[j][i] = gradp_u[j][i] + gradplastiter * beta;
-				}
-				
-				if((iter>2)&&(use_conjugate_2)){
-					fread(&gradclastiter,sizeof(float),1,FP5);
-					waveconv_u[j][i] = gradp_u[j][i] + gradclastiter * beta;
-				}
-				
-			}
-			}
+			if((iter>2)&&(use_conjugate_2)){
+			   sprintf(jac2,"%s_c_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
+			   FP5=fopen(jac2,"rb"); 
+			   for (i=1;i<=NX;i=i+IDX){
+			   for (j=1;j<=NY;j=j+IDY){
+				fread(&gradclastiter,sizeof(float),1,FP5);
+				waveconv_u[j][i] = gradp_u[j][i] + gradclastiter * beta; }}
+                           fclose(FP5); }
+
+
+                        if (iter==2) {
+			   fseek(FP6,0,SEEK_SET);
+			   for (i=1;i<=NX;i=i+IDX){
+			   for (j=1;j<=NY;j=j+IDY){
+				fread(&gradplastiter,sizeof(float),1,FP6);
+				waveconv_u[j][i] = gradp_u[j][i] + gradplastiter * beta; }} }
 			
 			fclose(FP6);
-			
-			if((iter>2)&&(use_conjugate_2)){fclose(FP5);}
-		}
 		
 		/* output of the conjugate gradient */
-		if((iter>1)&&(use_conjugate_1)){
 			sprintf(jac2,"%s_c_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP5=fopen(jac2,"wb");
 			
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv_u[j][i],sizeof(float),1,FP5);
-			}
-			}
+				fwrite(&waveconv_u[j][i],sizeof(float),1,FP5); }}
 			
 			fclose(FP5);
 			
 			
 			/* merge gradient file */ 
 			sprintf(jac2,"%s_c_u.old",JACOBIAN);
-#ifdef MPIIO
                         mergemod_par( jac2, waveconv_u );
-#else
-			MPI_Barrier(MPI_COMM_WORLD);
-			if (MYID==0) { mergemod(jac2,3); }
-#endif
+                        sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                        sprintf( dsetname, "c_u" );
+                        parallel_hdf5_write( dsetname, filename, waveconv_u, -2, iter );
 		}
 
 		sprintf(jac,"%s_p_u.old.%i.%i",JACOBIAN,POS[1],POS[2]);
@@ -434,20 +325,16 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		/* output of the preconditioned gradient */
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-			fwrite(&gradp_u[j][i],sizeof(float),1,FP4);
-		}
-		}
+			fwrite(&gradp_u[j][i],sizeof(float),1,FP4); }}
 		
 		fclose(FP4);
 		
 		/* merge gradient file */ 
 		sprintf(jac,"%s_p_u.old",JACOBIAN);
-#ifdef MPIIO		
 	        mergemod_par( jac, gradp_u );
-#else	
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (MYID==0) { mergemod(jac,3); }
-#endif
+                sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                sprintf( dsetname, "p_u" );
+                parallel_hdf5_write( dsetname, filename, gradp_u, -2, iter );
 	}
 	
 	/* ================================================================================================================================ */
@@ -476,20 +363,16 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-			fwrite(&waveconv_rho[j][i],sizeof(float),1,FP3);
-		}
-		}
+			fwrite(&waveconv_rho[j][i],sizeof(float),1,FP3); }}
 			
 		fclose(FP3);
 			
 		/* merge gradient file */ 
 		sprintf(jac,"%s_g_rho.old",JACOBIAN);
-#ifdef MPIIO
 	        mergemod_par( jac, waveconv_rho );
-#else
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (MYID==0) { mergemod(jac,3); }
-#endif
+                sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                sprintf( dsetname, "g_rho" );
+		parallel_hdf5_write( dsetname, filename, waveconv_rho, -2, iter );
 	
 		/* apply spatial wavelength filter */
 		if(SPATFILTER==1){
@@ -503,37 +386,16 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		/* output of the preconditioned gradient */
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-		waveconv_rho[j][i] = C_rho * waveconv_rho[j][i];
-			gradp_rho[j][i]=waveconv_rho[j][i];
-		}
-		}
+		     waveconv_rho[j][i] = C_rho * waveconv_rho[j][i];
+		     gradp_rho[j][i]=waveconv_rho[j][i]; }}
 		
 		/* save gradient for output as inversion result */
 		if(iter==nfstart_jac){
-#ifdef MPIIO
 			sprintf(jac,"%s_p_rho_it%d.old",JACOBIAN,iter);
                         mergemod_par( jac, waveconv_rho );
-#else
-			sprintf(jac,"%s_p_rho_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			FP3=fopen(jac,"wb");
-			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv_rho[j][i],sizeof(float),1,FP3);
-			}
-			}
-			
-			fclose(FP3);
-			
-			/* merge gradient file */ 
-			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac,"%s_p_rho_it%d.old",JACOBIAN,iter);
-			if (MYID==0) { mergemod(jac,3); }
-                        
-			MPI_Barrier(MPI_COMM_WORLD);
-			sprintf(jac,"%s_p_rho_it%d.old.%i.%i",JACOBIAN,iter,POS[1],POS[2]);
-			remove(jac);
-#endif
+                        sprintf( filename, "%s_jacobian_iterations.h5", SEIS_FILE );
+                        sprintf( dsetname, "p_rho" );
+                        parallel_hdf5_write( dsetname, filename, waveconv_rho, -3, iter );
 		}
 		
 		/* calculate conjugate gradient direction, if iter > 1 (after Mora 1987) */
@@ -544,10 +406,6 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			sprintf(jac,"%s_p_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP6=fopen(jac,"rb");
 			
-			if((iter>2)&&(use_conjugate_2)){
-				sprintf(jac2,"%s_c_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
-				FP5=fopen(jac2,"rb");
-			}
 			
 			/* apply scalar product to obtain the coefficient beta */
 			betaz = 0.0;
@@ -555,12 +413,8 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
 				fread(&gradplastiter,sizeof(float),1,FP6);
-				
-				/* Polak and Ribiere */
 				betaz += (gradp_rho[j][i]) * ( (gradp_rho[j][i]) - (gradplastiter) );
-				betan += (gradplastiter) * (gradplastiter);
-			}
-			}
+				betan += (gradplastiter) * (gradplastiter); }}
 			
 			betar = 0.0;
 			MPI_Allreduce(&betaz,&betar,1,MPI_FLOAT,MPI_SUM,MPI_COMM_WORLD);
@@ -576,50 +430,40 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 			/* direction reset */
 			if(beta<0.0){beta = 0.0;}
 
-			fseek(FP6,0,SEEK_SET);
+			if (iter==2){
+			   fseek(FP6,0,SEEK_SET);
+			   for (i=1;i<=NX;i=i+IDX){
+			   for (j=1;j<=NY;j=j+IDY){
+				fread(&gradplastiter,sizeof(float),1,FP6);
+				waveconv_rho[j][i] = gradp_rho[j][i] + gradplastiter * beta; }} }
 			
-			for (i=1;i<=NX;i=i+IDX){
-			for (j=1;j<=NY;j=j+IDY){
-				
-				if(iter==2){
-					fread(&gradplastiter,sizeof(float),1,FP6);
-					waveconv_rho[j][i] = gradp_rho[j][i] + gradplastiter * beta;
-				}
-				
-				if((iter>2)&&(use_conjugate_2)){
-					fread(&gradclastiter,sizeof(float),1,FP5);
-					waveconv_rho[j][i] = gradp_rho[j][i] + gradclastiter * beta;
-				}
-				
-			}
-			}
+			if ((iter>2)&&(use_conjugate_2)){
+			   sprintf(jac2,"%s_c_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
+			   FP5=fopen(jac2,"rb");
+			   for (i=1;i<=NX;i=i+IDX){
+			   for (j=1;j<=NY;j=j+IDY){
+				fread(&gradclastiter,sizeof(float),1,FP5);
+				waveconv_rho[j][i] = gradp_rho[j][i] + gradclastiter * beta; }} 
+                           fclose(FP5); }
 			
 			fclose(FP6);
-			
-			if((iter>2)&&(use_conjugate_2)){fclose(FP5);}
-		}
 		
 		/* output of the conjugate gradient */
-		if((iter>1)&&(use_conjugate_1)){
 			sprintf(jac2,"%s_c_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
 			FP5=fopen(jac2,"wb");
 			
 			for (i=1;i<=NX;i=i+IDX){
 			for (j=1;j<=NY;j=j+IDY){
-				fwrite(&waveconv_rho[j][i],sizeof(float),1,FP5);
-			}
-			}
+				fwrite(&waveconv_rho[j][i],sizeof(float),1,FP5); }}
 			
 			fclose(FP5);
 			
 			/* merge gradient file */ 
 			sprintf(jac2,"%s_c_rho.old",JACOBIAN);
-#ifdef MPIIO
                         mergemod_par( jac2, waveconv_rho );
-#else
-			MPI_Barrier(MPI_COMM_WORLD);
-			if (MYID==0) {  mergemod(jac2,3); }
-#endif
+                        sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                        sprintf( dsetname, "c_rho" );
+                        parallel_hdf5_write( dsetname, filename, waveconv_rho, -2, iter );
 		}
 
 		sprintf(jac,"%s_p_rho.old.%i.%i",JACOBIAN,POS[1],POS[2]);
@@ -628,19 +472,17 @@ void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int
 		/* output of the preconditioned gradient */
 		for (i=1;i<=NX;i=i+IDX){
 		for (j=1;j<=NY;j=j+IDY){
-			fwrite(&gradp_rho[j][i],sizeof(float),1,FP4);
-		}
-		}
+			fwrite(&gradp_rho[j][i],sizeof(float),1,FP4); }}
 		
 		fclose(FP4);
 		
 		/* merge gradient file */ 
 		sprintf(jac,"%s_p_rho.old",JACOBIAN);
-#ifdef MPIIO		
                 mergemod_par( jac, gradp_rho );
-#else
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (MYID==0) { mergemod(jac,3); }
-#endif
+                sprintf( filename, "%s_jacobian.h5", SEIS_FILE );
+                sprintf( dsetname, "p_rho" );
+                parallel_hdf5_write( dsetname, filename, gradp_rho, -2, iter );
 	}
+
 }
+
