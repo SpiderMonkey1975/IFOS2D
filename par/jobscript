@@ -1,0 +1,37 @@
+#!/bin/bash --login 
+##
+## Job file for running IFOS2D  
+##=========================================================
+#SBATCH --job-name=ifos2d
+#SBATCH --tasks=12
+#SBATCH --nodes=1
+#SBATCH --account=pawsey0001
+#SBATCH --time=00:14:00
+#SBATCH --export=NONE
+
+#
+# Set the runtime environment
+#-----------------------------
+module swap gcc/4.8.4 gcc/7.2.0
+module load openmpi fftw hdf5-parallel
+
+#
+# Setup the simulation output directory
+#---------------------------------------
+if [ -d /scratch/pawsey0001/mcheeseman/IFOS2D/TEST ]; then
+   rm -rf /scratch/pawsey0001/mcheeseman/IFOS2D/TEST 
+fi
+
+mkdir -p /scratch/pawsey0001/mcheeseman/IFOS2D/TEST/jacobian
+mkdir -p /scratch/pawsey0001/mcheeseman/IFOS2D/TEST/measured_data
+mkdir -p /scratch/pawsey0001/mcheeseman/IFOS2D/TEST/model
+
+#
+# Run the forward-only simulation 
+#---------------------------------
+time srun -n 12 -N 1 --export=ALL ../bin/IFOS2D in_and_out/TEST_FW.json
+
+#
+# Run the inverse simulation
+#----------------------------
+time srun -n 12 -N 1 --export=ALL ../bin/IFOS2D in_and_out/TEST_INV.json

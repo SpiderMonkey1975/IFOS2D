@@ -47,9 +47,9 @@ include ../contrib/compilers/compiler.inc
 
 LFLAGS=
 ifeq ($(NONCRAY),1)
-  LFLAGS+=-L${FFTW_LIB} 
+  LFLAGS+=-L${FFTW_LIB} -L${HDF5_DIR}/lib 
 endif
-LFLAGS+= -lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++
+LFLAGS+= -lm -lcseife -lstfinv -laff -lfourierxx -lfftw3 -lstdc++ -lhdf5
 SFLAGS=-L./../contrib/libcseife -L./../contrib/bin
 IFLAGS=-I./../contrib/libcseife -I./../contrib/header -I.
 
@@ -144,6 +144,7 @@ IFOS2D= \
 	matcopy_acoustic.c \
 	mergemod.c \
 	mergemod_par.c \
+	hdf5_routines.c \
 	max_grad.c \
 	note.c \
 	norm.c \

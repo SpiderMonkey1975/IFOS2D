@@ -30,18 +30,15 @@
 void readmod(float  **  rho, float **  pi, float **  u, float ** taus, float ** taup, float * eta){
     
     extern float DT, *FL, TAU;
-    extern int L,WAVETYPE, VERBOSE;
-    extern int NX, NY, NXG, NYG,  POS[3], MYID, PARAMETERIZATION;
+    extern int L,WAVETYPE, VERBOSE, NX, NY, NXG, NYG,  POS[3], MYID, PARAMETERIZATION;
     extern char  MFILE[STRING_SIZE];
     extern FILE *FP;
-    
     
     /* local variables */
     float rhov, muv, piv, vp, vs, qp, qs, *pts;
     int i, j, ii, jj, l, sw_Qp=1, sw_Qs=1;
     FILE *fp_vs, *fp_vp, *fp_rho, *fp_qp, *fp_qs;
     char filename[STRING_SIZE];
-    
     
     /* vector for maxwellbodies */
     pts=vector(1,L);
@@ -50,7 +47,7 @@ void readmod(float  **  rho, float **  pi, float **  u, float ** taus, float ** 
         eta[l]=DT/pts[l];
     }
     
-	   fprintf(FP,"\n...reading model information from model-files...\n");
+    fprintf(FP,"\n...reading model information from model-files...\n");
     
 	   /* read density and seismic velocities */
 	   /* ----------------------------------- */
@@ -250,21 +247,21 @@ void readmod(float  **  rho, float **  pi, float **  u, float ** taus, float ** 
     if(WAVETYPE==1||WAVETYPE==3){
         if(PARAMETERIZATION==1) sprintf(filename,"%s.out.vp",MFILE);
         if(PARAMETERIZATION==3) sprintf(filename,"%s.out.pi",MFILE);
-        write_matrix_disk(pi, filename);
+        write_matrix_disk(pi, filename );
         
         sprintf(filename,"%s.out.qp",MFILE);
-        write_matrix_disk(taup, filename);
+        write_matrix_disk(taup, filename );
     }
     
     if(PARAMETERIZATION==1) sprintf(filename,"%s.out.vs",MFILE);
     if(PARAMETERIZATION==3) sprintf(filename,"%s.out.mu",MFILE);
-    write_matrix_disk(u, filename);
+    write_matrix_disk(u, filename );
     
     sprintf(filename,"%s.out.rho",MFILE);
-    write_matrix_disk(rho, filename);
+    write_matrix_disk(rho, filename );
     
     sprintf(filename,"%s.out.qs",MFILE);
-    write_matrix_disk(taus, filename);
+    write_matrix_disk(taus, filename );
     
     free_vector(pts,1,L);
 }

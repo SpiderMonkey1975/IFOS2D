@@ -30,97 +30,75 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
 {
 
 	/* extern variables */
-
-    extern float DH;
-	extern int FREE_SURF, NX, NY, NXG, NYG;
-	extern int NPROCX, NPROCY, MYID, POS[3];
+        extern float DH, SRTRADIUS;
+	extern int FREE_SURF, NX, NY, NXG, NYG, NPROCX, NPROCY, MYID, POS[3], USE_WORKFLOW, WORKFLOW_STAGE, GRADT1, GRADT2, GRADT3, GRADT4;
+	extern int SRTSHAPE, FILTSIZE, VERBOSE;
 	extern FILE *FP;
 	extern char TAPER_FILE_NAME[STRING_SIZE];
-    extern int USE_WORKFLOW, WORKFLOW_STAGE;
 	
 	/* local variables */
 	int i, j, h, ifw, ii, jj, n,  taperlength,taperlength2;
 	int ijc, iy, ix,  xx, yy, srctaper_gridpt, i1, j1;
-
-	extern int GRADT1, GRADT2, GRADT3, GRADT4;
-	float  a, *window, grad_tap, **waveconvtmp;
-	char modfile[STRING_SIZE];
-	
-	extern float SRTRADIUS;
-	extern int SRTSHAPE, FILTSIZE;
-        float **m, **edgemat, **mm, **msum, minm, maxm, x, y, rad, **taper_coeff_glob;
-        float maxrad;
-	char taper_file[STRING_SIZE];
-    extern int VERBOSE;
+	char modfile[STRING_SIZE], taper_file[STRING_SIZE];
+        float a, *window, grad_tap, **waveconvtmp, **m, **edgemat, **mm, **msum, minm, maxm, x, y, rad, **taper_coeff_glob, maxrad;
 	FILE *fp_taper = NULL;
+        float grad_tap_array[NXG+1];
 
     /* =============== */
     /* Vertical taper  */
     /* =============== */
 	
-	if(sws==1){
+	if (sws==1) {
 	
 	/* define taper geometry */
-	taperlength=GRADT2-GRADT1;
-	taperlength2=GRADT4-GRADT3;
-	ifw = GRADT4-GRADT1;
+	   taperlength = GRADT2-GRADT1;
+  	   taperlength2 = GRADT4-GRADT3;
+	   ifw = GRADT4-GRADT1;
 	
-	if (MYID==0&&VERBOSE)
-	{
-		fprintf(FP,"\n **Message from taper_grid (printed by PE %d):\n",MYID);
-		fprintf(FP," Coefficients for gradient taper are now calculated.\n");
-	}
-	
-	waveconvtmp = matrix(0,NY+1,0,NX+1);
-	window=vector(1,ifw);
+  	   waveconvtmp = matrix(0,NY+1,0,NX+1);
+	   window = vector(1,ifw);
 	 
-	 /* Gaussian window */  
-        a=3;    /* damping coefficient */
-        for (i=1;i<=ifw;i++){
-	window[i] = 1.0;
-	
-	    if(i<=taperlength){
-	       window[i] = exp(-(1.0/2.0)*(a*(i-taperlength)/(taperlength/2.0))*(a*(i-taperlength)/(taperlength/2.0)));
-	    }
+	/* Gaussian window */  
+           a = 3;    /* damping coefficient */
+           for (i=1;i<=ifw;i++) { window[i] = 1.0; }
+
+           for ( i=1; i<=taperlength; i++ ) { 
+	       window[i] = exp(-(1.0/2.0)*(a*(i-taperlength)/(taperlength/2.0))*(a*(i-taperlength)/(taperlength/2.0))); }
 	    
-	    if(i>=(ifw-taperlength2)){
-	       window[i] = exp(-(1.0/2.0)*(a*(i-(ifw-taperlength2))/(taperlength2/2.0))*(a*(i-(ifw-taperlength2))/(taperlength2/2.0)));
-	    }
+	   for (i=(ifw-taperlength2)+1; i<=ifw; i++ ) {
+	       window[i] = exp(-(1.0/2.0)*(a*(i-(ifw-taperlength2))/(taperlength2/2.0))*(a*(i-(ifw-taperlength2))/(taperlength2/2.0))); }
 	    
-	}
+           h = 1;
+           for (i=1;i<=NXG;i++) {
+               if ((i>GRADT1)&&(i<GRADT4)){ grad_tap_array[i] = window[h]; h++; }
+               else { grad_tap_array[i] = 0.0; }}
 	
+           for (j=1;j<=NY;j++){
+           for (i=1;i<=NX;i++){
+               ii = i + POS[1]*NX;
+               taper_coeff[j][i] = grad_tap_array[ii]; }}
+
 	/* loop over global grid */
-	for (j=1;j<=NYG;j++){
+//	for (j=1;j<=NYG;j++) {
 	
-	   h=1;
-	   for (i=1;i<=NXG;i++){
+//	   h=1;
+//	   for (i=1;i<=NXG;i++){
 
-                        grad_tap=0.0;
-			
-			if((i>GRADT1)&&(i<GRADT4)){
-			   grad_tap=window[h];
-			   h++;
-			}
+//              grad_tap=0.0;
+//	      if ((i>GRADT1)&&(i<GRADT4)){
+//		 grad_tap=window[h];
+//		  h++; }
 			   			
-			if ((POS[1]==((i-1)/NX)) && 
-		   	 (POS[2]==((j-1)/NY))){
-				ii=i-POS[1]*NX;
-				jj=j-POS[2]*NY;
-
-				taper_coeff[jj][ii]=grad_tap;
-
-			}
-		}
-	}	
+//	      if ((POS[1]==((i-1)/NX)) && (POS[2]==((j-1)/NY))){
+//		ii=i-POS[1]*NX;
+//		jj=j-POS[2]*NY;
+//		taper_coeff[jj][ii]=grad_tap; } }}
 	
 	/* apply taper on local gradient */
 	for (j=1;j<=NY;j++){
-	   for (i=1;i<=NX;i++){
-           waveconv[j][i]*=taper_coeff[j][i];
-	   waveconvtmp[j][i] = waveconv[j][i];
-           }
-	}
-	
+	for (i=1;i<=NX;i++){
+           waveconv[j][i]*=taper_coeff[j][i]; }}
+//	   waveconvtmp[j][i] = waveconv[j][i]; }}
 		
         /* apply filter at shot and receiver points */
 	for (n=1;n<=nshots;n++)
@@ -131,15 +109,16 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
 			ii = i-POS[1]*NX;
 			jj = j-POS[2]*NY;
             
-			waveconvtmp[jj][ii] = 0.0;
+//			waveconvtmp[jj][ii] = 0.0;
+			waveconv[jj][ii] = 0.0;
 		}
 	}
 
-	for (j=1;j<=NY;j++){
-		for (i=1;i<=NX;i++){
-        		waveconv[j][i] = waveconvtmp[j][i];
-		}
-	}	
+//	for (j=1;j<=NY;j++){
+//		for (i=1;i<=NX;i++){
+ //       		waveconv[j][i] = waveconvtmp[j][i];
+//		}
+//	}	
 	
 	for (n=1;n<=ntr;n++)
 	{
@@ -149,27 +128,20 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
 			ii = i-POS[1]*NX;
 			jj = j-POS[2]*NY;
             
-			waveconvtmp[jj][ii] = 0.0;
+//			waveconvtmp[jj][ii] = 0.0;
+			waveconv[jj][ii] = 0.0;
 			
 		}
 	}
 
-	for (j=1;j<=NY;j++){
-		for (i=1;i<=NX;i++){
-        		waveconv[j][i] = waveconvtmp[j][i];
-		}
-	}	
+//	for (j=1;j<=NY;j++){
+//		for (i=1;i<=NX;i++){
+//        		waveconv[j][i] = waveconvtmp[j][i];
+//		}
+//	}	
 
 	sprintf(modfile,"taper_coeff_vert.bin");
-//MPCH - not sure
-#ifdef MPIIO
         mergemod_par( modfile, taper_coeff );
-#else
-	writemod(modfile,taper_coeff,3); 
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	if (MYID==0) { mergemod(modfile,3); }
-#endif
 	free_vector(window,1,ifw);
 	free_matrix(waveconvtmp,0,NX+1,0,NY+1);
 	}
@@ -247,13 +219,7 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
         }
 
         sprintf(modfile,"taper_coeff_hor.bin");
-#ifdef MPIIO
         mergemod_par( modfile, taper_coeff );
-#else
-        writemod(modfile,taper_coeff,3); 
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (MYID==0) { mergemod(modfile,3); }
-#endif
 
         free_vector(window,1,ifw);
         free_matrix(waveconvtmp,0,NX+1,0,NY+1);
@@ -412,14 +378,7 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
 		free_matrix(waveconvtmp,0,NX+1,0,NY+1);
         
         sprintf(modfile,"taper_coeff_sources.bin");
-#ifdef MPIIO
         mergemod_par( modfile, taper_coeff );
-#else
-	MPI_Barrier(MPI_COMM_WORLD);
-        writemod(modfile,taper_coeff,3); 
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (MYID==0) { mergemod(modfile,3); }
-#endif	
 	}
 
     /* ======================== */
@@ -508,14 +467,7 @@ void taper_grad(float ** waveconv,float ** taper_coeff, float **srcpos, int nsho
 
         if(VERBOSE == 1) {
             sprintf(modfile,"taper_coeff_file.bin");
-#ifdef MPIIO
             mergemod_par( modfile, taper_coeff );
-#else
-            writemod(modfile,taper_coeff,3);
-                        
-            MPI_Barrier(MPI_COMM_WORLD);
-            if (MYID==0) { mergemod(modfile,3);   }
-#endif
         }
         } 
 }

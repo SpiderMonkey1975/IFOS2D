@@ -17,64 +17,50 @@
 -----------------------------------------------------------------------------------------*/
 
 #include "fd.h"
+#include <unistd.h>
 #include <mpi.h>
 #include <hdf5.h>
 
-void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data, int newfile, int iter ){
+void parallel_hdf5_write( char dsetname[12], char fname[STRING_SIZE], float ** data ){
 
-     extern int NXG, NX, NY, NYG, POS[3], ITERMAX;
-     int ii, jj, ind, rank;
+     extern int NXG, NX, NY, NYG, POS[3];
+     int ii, jj, ind;
      float a[NX*NY];
 
      hid_t   plist, fid, dset, filespace, memspace;
-     hsize_t *global_dims, *local_dims, *count, *stride, *offset;
+     hsize_t global_dims[2], local_dims[2], count[2], stride[2], offset[2];
      herr_t  status;
-
-     rank = abs(newfile); 
-
-     global_dims = (hsize_t *) malloc( rank*sizeof(hsize_t) );
-     local_dims = (hsize_t *) malloc( rank*sizeof(hsize_t) );
-     count = (hsize_t *) malloc( rank*sizeof(hsize_t) );
-     stride = (hsize_t *) malloc( rank*sizeof(hsize_t) );
-     offset = (hsize_t *) malloc( rank*sizeof(hsize_t) );
 
   /* New global output file created or opened with parallel access enabled */
      plist = H5Pcreate( H5P_FILE_ACCESS );
      H5Pset_fapl_mpio( plist, MPI_COMM_WORLD, MPI_INFO_NULL );
-     if ( newfile>0 ) {
-        fid = H5Fcreate( fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist );
-     } else {
-        fid = H5Fopen( fname, H5F_ACC_RDWR, plist ); }
+
+  /* Check if the requested file exists already */
+     if ( access( fname, F_OK ) != -1 ) { fid = H5Fopen( fname, H5F_ACC_RDWR, plist ); }
+     else { fid = H5Fcreate( fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist ); }
      H5Pclose( plist );
 
-  /* Create/Open dataset inside the output file */
+  /* Create/Open dataset with global dimensions and chunking enabled */
      global_dims[0] = NXG;
      global_dims[1] = NYG;
-     if ( rank==3 ) { global_dims[2] = ITERMAX; }
-     filespace = H5Screate_simple( rank, global_dims, NULL );
+     filespace = H5Screate_simple( 2, global_dims, NULL );
 
      local_dims[0] = NX;
      local_dims[1] = NY;
-     if ( rank==3 ) { local_dims[2] = 1; }
-     memspace = H5Screate_simple( rank, local_dims, NULL );
-
      plist = H5Pcreate( H5P_DATASET_CREATE );
-     H5Pset_chunk( plist, rank, local_dims );
+     H5Pset_chunk( plist, 2, local_dims );
      dset = H5Dcreate( fid, dsetname, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, plist, H5P_DEFAULT );
      H5Pclose( plist );
 
   /* Each MPI task selects it own piece of the global dataset */
      offset[0] = POS[1]*NX; 
      offset[1] = POS[2]*NY;
-     if ( rank==3 ) { offset[2] = iter-1; }
 
      count[0] = 1;
      count[1] = 1;
-     if ( rank==3 ) { count[2] = 1; }
 
      stride[0] = 1;
      stride[1] = 1;
-     if ( rank==3 ) { stride[2] = 1; }
 
      status = H5Sselect_hyperslab( filespace, H5S_SELECT_SET, offset, stride, count, local_dims );
 
@@ -86,6 +72,8 @@ void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], f
          ind++; }}
 
   /* Perform a collective write to the new output file */
+     memspace = H5Screate_simple( 2, local_dims, NULL );
+
      plist = H5Pcreate( H5P_DATASET_XFER );
      H5Pset_dxpl_mpio( plist, H5FD_MPIO_COLLECTIVE );
      status = H5Dwrite( dset, H5T_NATIVE_FLOAT, memspace, filespace, plist, a );
@@ -95,18 +83,6 @@ void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], f
      H5Sclose( filespace );
      H5Sclose( memspace );
      H5Fclose( fid );
-
-     free( global_dims );
-     free( local_dims );
-     free( offset );
-     free( stride );
-     free( count );
-
-     global_dims = NULL;
-     local_dims = NULL;
-     stride = NULL;
-     offset = NULL;
-     count = NULL;
      return;
 }
 

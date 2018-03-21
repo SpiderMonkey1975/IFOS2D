@@ -50,15 +50,15 @@ void lbfgs(float **grad_vs, float **grad_rho, float **grad_vp,float Vs_avg,float
     
     if(!ACOUSTIC) {
         sprintf(jac,"%s_grad1_vs_it%d",JACOBIAN,iteration);
-        write_matrix_disk(grad_vs, jac);
+        write_matrix_disk(grad_vs, jac );
     }
     
     sprintf(jac,"%s_grad1_rho_it%d",JACOBIAN,iteration);
-    write_matrix_disk(grad_rho, jac);
+    write_matrix_disk(grad_rho, jac );
     
     if(WAVETYPE==1||WAVETYPE==3) {
         sprintf(jac,"%s_grad1_vp_it%d",JACOBIAN,iteration);
-        write_matrix_disk(grad_vp, jac);
+        write_matrix_disk(grad_vp, jac );
     }
     
     /*---------------------*/
@@ -220,15 +220,15 @@ void lbfgs(float **grad_vs, float **grad_rho, float **grad_vp,float Vs_avg,float
     /*---------------------*/
     if(!ACOUSTIC){
         sprintf(jac,"%s_grad2_vs_it%d",JACOBIAN,iteration);
-        write_matrix_disk(grad_vs, jac);
+        write_matrix_disk(grad_vs, jac );
     }
     
     sprintf(jac,"%s_grad2_rho_it%d",JACOBIAN,iteration);
-    write_matrix_disk(grad_rho, jac);
+    write_matrix_disk(grad_rho, jac );
     
     if(WAVETYPE==1||WAVETYPE==3) {
         sprintf(jac,"%s_grad2_vp_it%d",JACOBIAN,iteration);
-        write_matrix_disk(grad_vp, jac);
+        write_matrix_disk(grad_vp, jac );
     }
 }
 

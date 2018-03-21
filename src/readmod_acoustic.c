@@ -98,9 +98,9 @@ void readmod_acoustic(float  **  rho, float **  pi){
     
     /* Write model to file */
     sprintf(filename,"%s.out.vp",MFILE);
-    write_matrix_disk(pi, filename);
+    write_matrix_disk(pi, filename );
     
     sprintf(filename,"%s.out.rho",MFILE);
-    write_matrix_disk(rho, filename);
+    write_matrix_disk(rho, filename );
     
 }

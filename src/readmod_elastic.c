@@ -153,15 +153,15 @@ void readmod_elastic(float  **  rho, float **  pi, float **  u){
     if(WAVETYPE==1||WAVETYPE==3){
         if(PARAMETERIZATION==1) sprintf(filename,"%s.out.vp",MFILE);
         if(PARAMETERIZATION==3) sprintf(filename,"%s.out.pi",MFILE);
-        write_matrix_disk(pi, filename);
+        write_matrix_disk(pi, filename );
     }
     
     if(PARAMETERIZATION==1) sprintf(filename,"%s.out.vs",MFILE);
     if(PARAMETERIZATION==3) sprintf(filename,"%s.out.mu",MFILE);
-    write_matrix_disk(u, filename);
+    write_matrix_disk(u, filename );
     
     sprintf(filename,"%s.out.rho",MFILE);
-    write_matrix_disk(rho, filename);
+    write_matrix_disk(rho, filename );
     
 }
 

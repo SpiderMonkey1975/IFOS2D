@@ -56,22 +56,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     if(GRAD_METHOD==2&&(itest==0)){
         w=iter%N_LBFGS;
         if(w==0) w=N_LBFGS;
-#ifndef MPIIO        
-        if(!ACOUSTIC){
-            sprintf(jac,"%s_s_LBFGS_vs_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-            FP_JAC=fopen(jac,"wb");
-        }
-        
-        if(LBFGS_NPAR>1){
-            sprintf(jac2,"%s_s_LBFGS_rho_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-            FP_JAC2=fopen(jac2,"wb");
-        }
-        
-        if(LBFGS_NPAR>2){
-            sprintf(jac2,"%s_s_LBFGS_vp_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-            FP_JAC3=fopen(jac2,"wb");
-        }
-#endif
         
         if(MYID==0) printf("\n\n ------------ L-BFGS ---------------");
         if(MYID==0) printf("\n Saving model difference for L-BFGS");
@@ -170,14 +154,6 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     
     exchange_par();
     
-//    if(MYID==0&&VERBOSE){
-//        printf("MYID = %d \t pimaxr = %e \t gradmaxr = %e \n",MYID,pimaxr,gradmaxr);
-//        printf("MYID = %d \t EPSILON = %e \n",MYID,EPSILON);
-//        if(!ACOUSTIC)
-//            printf("MYID = %d \t umaxr = %e \t gradmaxr_u = %e \n",MYID,umaxr,gradmaxr_u);
-//        printf("MYID = %d \t rhomaxr = %e \t gradmaxr_rho = %e \n",MYID,rhomaxr,gradmaxr_rho);
-//    }
-    
     /* loop over local grid */
     for (i=1;i<=NX;i++){
         for (j=1;j<=NY;j++){
@@ -268,23 +244,14 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
                         
                         if(!ACOUSTIC) {
                             s_LBFGS[w][l]=(unp1[j][i]-u[j][i])/Vs_avg;
-#ifndef MPIIO
-                            fwrite(&s_LBFGS[w][l],sizeof(float),1,FP_JAC);
-#endif
                         }
                         
                         if(LBFGS_NPAR>1) {
                             s_LBFGS[w][l+NX*NY]=(rhonp1[j][i]-rho[j][i])/rho_avg;
-#ifndef MPIIO
-                            fwrite(&s_LBFGS[w][l+NY*NX],sizeof(float),1,FP_JAC2);
-#endif
                         }
                         
                         if(LBFGS_NPAR>2){
                             s_LBFGS[w][l+2*NX*NY]=(pinp1[j][i]-pi[j][i])/Vp_avg;
-#ifndef MPIIO
-                            fwrite(&s_LBFGS[w][l+2*NY*NX],sizeof(float),1,FP_JAC3);
-#endif
                         }
                         
                     }
@@ -296,78 +263,41 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
         }
     }
    
-#ifdef MPIIO
     io_data = (float **)malloc( NY*sizeof(float *) );
     for ( i=0; i<NY; i++ )
         io_data[i] = (float *)malloc( NX*sizeof(float) );
-#endif
  
     if(GRAD_METHOD==2&&(itest==0)){
         if(!ACOUSTIC){
-#ifdef MPIIO
            for ( j=1; j<=NY; j++ ) {
            for ( i=1; i<=NX; i++ ) {
                io_data[j][i] = s_LBFGS[j][i];  }}
            
            sprintf(jac,"%s_s_LBFGS_vs_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
-#else
-            fclose(FP_JAC);
-            MPI_Barrier(MPI_COMM_WORLD);
-           sprintf(jac,"%s_s_LBFGS_vs_it%d.bin",JACOBIAN,iter+1);
-            if (MYID==0) { mergemod(jac,3); }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(jac,"%s_s_LBFGS_vs_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-            remove(jac);
-#endif
         }
         
         if(LBFGS_NPAR>1){
-#ifdef MPIIO
            for ( j=1; j<=NY; j++ ) {
            for ( i=1; i<=NX; i++ ) {
                io_data[j][i] = s_LBFGS[j][i+NX*NY]; }}
            
            sprintf(jac,"%s_s_LBFGS_rho_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
-#else
-           fclose(FP_JAC2);
-           MPI_Barrier(MPI_COMM_WORLD);
-           sprintf(jac,"%s_s_LBFGS_rho_it%d.bin",JACOBIAN,iter+1);
-           if (MYID==0) { mergemod(jac,3); }
-
-           MPI_Barrier(MPI_COMM_WORLD);
-           sprintf(jac,"%s_s_LBFGS_rho_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-           remove(jac);
-#endif
         }
         
         if(LBFGS_NPAR>2){
-#ifdef MPIIO
            for ( j=1; j<=NY; j++ ) {
            for ( i=1; i<=NX; i++ ) {
                io_data[j][i] = s_LBFGS[j][i+2*NX*NY]; }}
            
            sprintf(jac,"%s_s_LBFGS_vp_it%d.bin",JACOBIAN,iter+1);
            mergemod_par( jac, io_data );
-#else
-            fclose(FP_JAC3);
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(jac,"%s_s_LBFGS_vp_it%d.bin",JACOBIAN,iter+1);
-            if (MYID==0) { mergemod(jac,3); }
-           
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(jac,"%s_s_LBFGS_vp_it%d.bin.%i.%i",JACOBIAN,iter+1,POS[1],POS[2]);
-            remove(jac);
-#endif
         }
 
-#ifdef MPIIO
     for ( i=0; i<NY; i++ )
         free( io_data[i] );
     free( io_data );
-#endif
 
     }
     if(!ACOUSTIC)
@@ -377,154 +307,49 @@ void calc_mat_change_test(float  **  waveconv, float  **  waveconv_rho, float  *
     if(itest==0){
         if((wavetype_start==1||wavetype_start==3)){
             sprintf(modfile,"%s_vp.bin",INV_MODELFILE);
-#ifdef MPIIO            
             mergemod_par( modfile, pinp1 );
-#else
-            writemod(modfile,pinp1,3);
-            MPI_Barrier(MPI_COMM_WORLD);
-            
-            if (MYID==0) { mergemod(modfile,3); }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vp.bin.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-            remove(modfile);
-#endif            
             
         }
         if(!ACOUSTIC){
             sprintf(modfile,"%s_vs.bin",INV_MODELFILE);
-#ifdef MPIIO            
             mergemod_par( modfile, unp1 );
-#else
-            writemod(modfile,unp1,3);
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            if (MYID==0) { mergemod(modfile,3); }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vs.bin.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-            remove(modfile);
-#endif            
         }
         
         
         sprintf(modfile,"%s_rho.bin",INV_MODELFILE);
-#ifdef MPIIO
         mergemod_par( modfile, rho );
-#else
-        writemod(modfile,rho,3);
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (MYID==0) { mergemod(modfile,3); }
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        sprintf(modfile,"%s_rho.bin.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-        remove(modfile);
-#endif
         
     }
     
     if((itest==0)&&(iter==nfstart)){
         if((wavetype_start==1||wavetype_start==3)){
             sprintf(modfile,"%s_vp_it%d.bin",INV_MODELFILE,iter);
-#ifdef MPIIO
             mergemod_par( modfile, pi );
-#else
-            writemod(modfile,pi,3);
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            if (MYID==0) {
-               mergemod(modfile,3);
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vp_it%d.bin.%i.%i",INV_MODELFILE,iter,POS[1],POS[2]);
-            remove(modfile);
-#endif
         }
         if(!ACOUSTIC){
             sprintf(modfile,"%s_vs_it%d.bin",INV_MODELFILE,iter);
-#ifdef MPIIO
            mergemod_par( modfile, u );
-#else
-            writemod(modfile,u,3);
-            MPI_Barrier(MPI_COMM_WORLD);
-            
-            if (MYID==0) {
-               mergemod(modfile,3);
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vs_it%d.bin.%i.%i",INV_MODELFILE,iter,POS[1],POS[2]);
-            remove(modfile);
-#endif
         }
         
         sprintf(modfile,"%s_rho_it%d.bin",INV_MODELFILE,iter);
-#ifdef MPIIO
         mergemod_par( modfile, rho );
-#else
-        writemod(modfile,rho,3);
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        if (MYID==0) {
-           mergemod(modfile,3);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-        sprintf(modfile,"%s_rho_it%d.bin.%i.%i",INV_MODELFILE,iter,POS[1],POS[2]);
-        remove(modfile);
-#endif
     }
     
     if(VERBOSE&&(itest==1)){
         if((wavetype_start==1||wavetype_start==3)){
             
             sprintf(modfile,"%s_vp.step.bin",INV_MODELFILE);
-#ifdef MPIIO
             mergemod_par( modfile, pinp1 );        
-#else
-            writemod(modfile,pinp1,3);
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-
-            if (MYID==0) {
-               mergemod(modfile,3);
-            }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vp.step.bin.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-            remove(modfile);
-#endif
         }
         if(!ACOUSTIC){
             
             sprintf(modfile,"%s_vs.step.bin",INV_MODELFILE);
-#ifdef MPIIO
             mergemod_par( modfile, unp1 );
-#else
-            writemod(modfile,unp1,3);
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            if (MYID==0) { mergemod(modfile,3); }
-            
-            MPI_Barrier(MPI_COMM_WORLD);
-            sprintf(modfile,"%s_vs.step.bin.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-            remove(modfile);
-#endif
             
         }
         
         sprintf(modfile,"%s_rho.step.bin",INV_MODELFILE);
-#ifdef MPIIO
         mergemod_par( modfile, rho );
-#else
-        writemod(modfile,rho,3);
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (MYID==0) { mergemod(modfile,3); }
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        sprintf(modfile,"%s_rho.bin.step.%i.%i",INV_MODELFILE,POS[1],POS[2]);
-        remove(modfile);
-#endif
         
     }
 }

@@ -18,8 +18,8 @@ module swap gcc/4.8.5 gcc/7.2.0
 module load openmpi fftw
 
 #
-# Create a srun command to launch 12 MPI tasks on a compute node 
-#----------------------------------------------------------------
+# Create a command to launch 12 MPI tasks on a compute node 
+#------------------------------------------------------------
 run_cmd="srun -n 12 -N 1 --export=ALL"
 
 #

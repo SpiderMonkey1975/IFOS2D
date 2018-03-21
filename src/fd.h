@@ -167,7 +167,7 @@ void mergemod(char modfile[STRING_SIZE], int format);
 void mergemod_par(char modfile[STRING_SIZE], float ** data );
 
 void parallel_hdf5_read( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data );
-void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data, int newfile, int iter );
+void parallel_hdf5_write( char dsetname[STRING_SIZE], char fname[STRING_SIZE], float ** data );
 
 void note(FILE *fp);
 
@@ -188,7 +188,7 @@ void  taper(float *section, int ns, float fc);
 
 void  output_source_signal(FILE *fp, float **signals, int ns, int seis_form);
 
-void PCG(float ** waveconv, float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int ntr_glob, int iter, float C_vp, float ** gradp, int nfstart_jac, float ** waveconv_u, float C_vs, float ** gradp_u, float ** waveconv_rho, float C_rho, float ** gradp_rho, float Vs_avg, float F_LOW_PASS, int PCG_iter_start);
+void PCG(float ** waveconv, float ** waveconv_old, float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int ntr_glob, int iter, float C_vp, float ** gradp, float ** gradp_old, int nfstart_jac, float ** waveconv_u, float ** waveconv_u_old, float C_vs, float ** gradp_u, float ** gradp_u_old, float ** waveconv_rho, float ** waveconv_rho_old, float C_rho, float ** gradp_rho, float ** gradp_rho_old, float Vs_avg, float F_LOW_PASS, int PCG_iter_start);
 
 void PCG_SH(float ** taper_coeff, int nsrc, float ** srcpos, int ** recpos, int ntr_glob, int iter, int nfstart_jac, float ** waveconv_u, float C_vs, float ** gradp_u, float ** waveconv_rho, float C_rho, float ** gradp_rho, float Vs_avg, float F_LOW_PASS, int PCG_iter_start);
 

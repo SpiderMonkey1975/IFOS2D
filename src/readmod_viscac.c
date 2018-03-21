@@ -138,13 +138,13 @@ void readmod_viscac(float  **  rho, float **  pi, float ** taup, float * eta){
 	
 	/* write model to disk */
 	sprintf(filename,"%s.out.vp",MFILE);
-    write_matrix_disk(pi,filename);
+    write_matrix_disk(pi,filename );
     
     sprintf(filename,"%s.out.rho",MFILE);
-    write_matrix_disk(rho,filename);
+    write_matrix_disk(rho,filename );
     
     sprintf(filename,"%s.out.qp",MFILE);
-    write_matrix_disk(taup,filename);
+    write_matrix_disk(taup,filename );
     
 	free_vector(pts,1,L);
 }

@@ -43,7 +43,7 @@ int main(int argc, char **argv){
     float opteps_vp, opteps_vs, opteps_rho, Vp_avg, C_vp, Vs_avg, C_vs, rho_avg, C_rho;
     float memfwt, memfwt1, memfwtdata;
     char *buff_addr, ext[10], *fileinp;
-    char jac[225];
+    char jac[225], fname[225], dsetname[12];
     
     float L2, L2sum, L2_all_shots, L2sum_all_shots, *L2t, alphanom, alphadenom;
     int sum_killed_traces=0, sum_killed_traces_testshots=0, killed_traces=0, killed_traces_testshots=0;
@@ -61,6 +61,7 @@ int main(int argc, char **argv){
     float ** gradg, ** gradp,** gradg_rho, ** gradp_rho, ** gradg_u, ** gradp_u, ** gradp_u_z,** gradp_rho_z;
     float  **  prho,**  prhonp1, **prip=NULL, **prjp=NULL, **pripnp1=NULL, **prjpnp1=NULL, **  ppi, **  pu, **  punp1, **  puipjp, **  ppinp1;
     float  **  vpmat, ***forward_prop_x, ***forward_prop_y, ***forward_prop_rho_x, ***forward_prop_u, ***forward_prop_rho_y, ***forward_prop_p;
+    float ** gradp_last_iter, ** waveconv_last_iter, ** gradp_u_last_iter, ** gradp_rho_last_iter, ** waveconv_u_last_iter, ** waveconv_rho_last_iter;
     
     float ***forward_prop_z_xz,***forward_prop_z_yz,***forward_prop_rho_z,**waveconv_mu_z;
     float ** uxz, ** uyz;
@@ -464,6 +465,7 @@ int main(int argc, char **argv){
     
     if(FORWARD_ONLY==0){
         waveconv = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+        waveconv_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         waveconv_lam = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         waveconv_shot = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         
@@ -479,6 +481,7 @@ int main(int argc, char **argv){
         }
         gradg = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         gradp = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+        gradp_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         
         if(WAVETYPE==1 || WAVETYPE==3){
             forward_prop_rho_x =  f3tensor(-nd+1,NY+nd,-nd+1,NX+nd,1,NT/DTINV);
@@ -500,7 +503,9 @@ int main(int argc, char **argv){
         
         gradg_rho = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         gradp_rho = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+        gradp_rho_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         waveconv_rho = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+        waveconv_rho_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         waveconv_rho_s = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         waveconv_rho_shot = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         
@@ -522,7 +527,9 @@ int main(int argc, char **argv){
             forward_prop_u =  f3tensor(-nd+1,NY+nd,-nd+1,NX+nd,1,NT/DTINV);
             gradg_u = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
             gradp_u = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+            gradp_u_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
             waveconv_u = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
+            waveconv_u_last_iter = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
             waveconv_mu = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
             waveconv_u_shot = matrix(-nd+1,NY+nd,-nd+1,NX+nd);
         }
@@ -2144,17 +2151,17 @@ int main(int argc, char **argv){
                                     if (WAVETYPE==1 || WAVETYPE==3) {
                                         if(!ACOUSTIC){
                                             sprintf(jac,"%s_jacobian_u_shot%i",JACOBIAN,ishot);
-                                            write_matrix_disk(waveconv_u_shot, jac);
+                                            write_matrix_disk( waveconv_u_shot, jac );
                                         } else {
                                             sprintf(jac,"%s_jacobian_shot%i",JACOBIAN,ishot);
-                                            write_matrix_disk(waveconv_shot, jac);
+                                            write_matrix_disk(waveconv_shot, jac );
                                         }
                                     }
                                     
                                     /* Output jacobian VS per SHOT SH */
                                     if (WAVETYPE==2 || WAVETYPE==3) {
                                         sprintf(jac,"%s_jacobian_u_SH_shot%i",JACOBIAN,ishot);
-                                        write_matrix_disk(waveconv_u_shot_z, jac);
+                                        write_matrix_disk(waveconv_u_shot_z, jac );
                                     }
                                 }
                                 
@@ -2526,12 +2533,18 @@ int main(int argc, char **argv){
                         
                         if (WAVETYPE==1 || WAVETYPE==3) {
                             sprintf(jac,"%s_approx_hessian_it%i",JACOBIAN,iter);
-                            write_matrix_disk(We_sum, jac);
+                            write_matrix_disk(We_sum, jac );
+                            sprintf( fname, "%s_it%i.h5", JACOBIAN, iter );
+                            sprintf( dsetname, "hessian" );
+                            parallel_hdf5_write( dsetname, fname, We_sum );
                         }
                         
                         if (WAVETYPE==2 || WAVETYPE==3) {
                             sprintf(jac,"%s_approx_hessian_SH_it%i",JACOBIAN,iter);
-                            write_matrix_disk(We_sum_SH, jac);
+                            write_matrix_disk(We_sum_SH, jac );
+                            sprintf( fname, "%s_it%i.h5", JACOBIAN, iter );
+                            sprintf( dsetname, "hessian_SH" );
+                            parallel_hdf5_write( dsetname, fname, We_sum_SH );
                         }
                     }
                     
@@ -2700,7 +2713,7 @@ int main(int argc, char **argv){
                         }
                     }
                     
-                    if (WAVETYPE==1 || WAVETYPE==3) PCG(waveconv, taper_coeff, nsrc, srcpos, recpos, ntr_glob, iter, C_vp, gradp, nfstart_jac, waveconv_u, C_vs, gradp_u, waveconv_rho, C_rho, gradp_rho,Vs_avg,F_LOW_PASS,PCG_iter_start);
+                    if (WAVETYPE==1 || WAVETYPE==3) PCG(waveconv, waveconv_last_iter, taper_coeff, nsrc, srcpos, recpos, ntr_glob, iter, C_vp, gradp, gradp_last_iter, nfstart_jac, waveconv_u, waveconv_last_iter, C_vs, gradp_u, gradp_u_last_iter, waveconv_rho, waveconv_rho_last_iter, C_rho, gradp_rho, gradp_rho_last_iter, Vs_avg,F_LOW_PASS,PCG_iter_start);
                     if (WAVETYPE==2 || WAVETYPE==3) PCG_SH(taper_coeff, nsrc, srcpos, recpos, ntr_glob, iter, nfstart_jac, waveconv_u_z, C_vs, gradp_u_z, waveconv_rho_z, C_rho, gradp_rho_z,Vs_avg,F_LOW_PASS,PCG_iter_start);
                     
                 }
@@ -2729,10 +2742,16 @@ int main(int argc, char **argv){
                             /* Output joint gradient to disk */
                             sprintf(jac,"%s_joint_vs_it%i",JACOBIAN,iter);
                             write_matrix_disk(waveconv_u, jac);
+                            sprintf( fname, "%s_it%i.h5", JACOBIAN, iter );
+                            sprintf( dsetname, "joint_vs" );
+                            parallel_hdf5_write( dsetname, fname, waveconv_u );
                             
                             /* Output joint gradient to disk */
                             sprintf(jac,"%s_joint_rho_it%i",JACOBIAN,iter);
                             write_matrix_disk(waveconv_rho, jac);
+                            sprintf( fname, "%s_it%i.h5", JACOBIAN, iter );
+                            sprintf( dsetname, "joint_rho" );
+                            parallel_hdf5_write( dsetname, fname, waveconv_rho );
                             break;
                             
                         default:
@@ -3885,6 +3904,7 @@ int main(int argc, char **argv){
     }
     if(FORWARD_ONLY==0){
         free_matrix(waveconv,-nd+1,NY+nd,-nd+1,NX+nd);
+        free_matrix(waveconv_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconv_lam,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconv_shot,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconvtmp,-nd+1,NY+nd,-nd+1,NX+nd);
@@ -3897,6 +3917,7 @@ int main(int argc, char **argv){
         }
         free_matrix(gradg,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(gradp,-nd+1,NY+nd,-nd+1,NX+nd);
+        free_matrix(gradp_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
         
         if(WAVETYPE==1 || WAVETYPE==3){
             free_f3tensor(forward_prop_rho_x,-nd+1,NY+nd,-nd+1,NX+nd,1,NT/DTINV);
@@ -3905,7 +3926,9 @@ int main(int argc, char **argv){
         
         free_matrix(gradg_rho,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(gradp_rho,-nd+1,NY+nd,-nd+1,NX+nd);
+        free_matrix(gradp_rho_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconv_rho,-nd+1,NY+nd,-nd+1,NX+nd);
+        free_matrix(waveconv_rho_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconv_rho_s,-nd+1,NY+nd,-nd+1,NX+nd);
         free_matrix(waveconv_rho_shot,-nd+1,NY+nd,-nd+1,NX+nd);
         
@@ -3913,7 +3936,9 @@ int main(int argc, char **argv){
             free_f3tensor(forward_prop_u,-nd+1,NY+nd,-nd+1,NX+nd,1,NT/DTINV);
             free_matrix(gradg_u,-nd+1,NY+nd,-nd+1,NX+nd);
             free_matrix(gradp_u,-nd+1,NY+nd,-nd+1,NX+nd);
+            free_matrix(gradp_u_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
             free_matrix(waveconv_u,-nd+1,NY+nd,-nd+1,NX+nd);
+            free_matrix(waveconv_u_last_iter,-nd+1,NY+nd,-nd+1,NX+nd);
             free_matrix(waveconv_mu,-nd+1,NY+nd,-nd+1,NX+nd);
             free_matrix(waveconv_u_shot,-nd+1,NY+nd,-nd+1,NX+nd);
         }

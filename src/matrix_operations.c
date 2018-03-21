@@ -21,7 +21,7 @@
 
 #include "fd.h"
 
-void write_matrix_disk(float ** gradient,char path_name[STRING_SIZE]){
+void write_matrix_disk( float ** gradient, char path_name[STRING_SIZE] ){
 
     char joint[225];
     FILE *FPjoint;
