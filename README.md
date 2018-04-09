@@ -7,25 +7,22 @@ This is an unofficial version of the 2D elastic full waveform inversion code **I
 The inversion problem is still solved by a conjugate gradient method and the gradients are still computed in the time domain by the adjoint state method.  
 The forward modeling continues to use a time domain Finite-Difference scheme. However this version can some significant modifications:
 
-- Compiler support:  IFOS2D now has support for Intel and Cray compilers on the Cray XC platform
+- Compiler support:  IFOS2D now has support for GNU, Intel and Cray compilers on Cray and non-Cray platforms
 - Parallel I/O:  Where possible, serial I/O has been replace with MPI I/O calls resulting in significant performance increases on platforms with a parallel filesystem
 - Code Optimization: Several functions have been rewritten to increase performance when running with multiple MPI tasks
+- HDF5 support: output of some files is now done in HDF5 format.  This makes the files easily to identify by humans and use with visualization tools like ViSiT
 
-The result of these modifications is that this version of IFOS2D can run efficiently at large numbers of MPI tasks.  To date, the largest number of CPUs used has been 30,000.
+This version of IFOS2D can run efficiently at large numbers of MPI tasks.  To date, the largest number of CPUs used has been 30,000.
 
-The [**manual**](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home) is included in the download archive or can be downloaded [here](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home).
+The [**manual**](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home) for the original IFOS2D is included in the download archive or can be downloaded [here](https://git.scc.kit.edu/GPIAG-Software/IFOS2D/wikis/home).  It explains the fundamental science and algorithmic approach for the seismic inversion procedure.
 
 # Installation
 
-A detailed installation instruction is provided in the chapter 5 of the documentation (IFOS/doc/manual_IFOS.pdf). If the manual is not compiled,
-please use the script IFOS/doc/compile_LaTeX_manual.sh
-
-To compile IFOS2D a MAKEFILE is available in the IFOS/par directory. To use the MAKEFILE type
+To principal makefile used for compiling IFOS2D is located in the /par subdirectory. To use it, type
 
           make <MAKEFILE_OPTIONS>
 
-in the IFOS2D/par directory. MAKEFILE_OPTIONS are optional arguments.  Valid values for MAKEFILE_OPTIONS are described below.  The makefile compiles
-the additional libaries:
+The available values for  MAKEFILE_OPTIONS are described below.  The makefile compiles the additional libaries:
 
 cseife
 stfinv
@@ -42,6 +39,7 @@ There are several known dependencies:
 - working MPI implementation
 - FFTW library (version 3)
 - standard c++ and math libraries (libstdc.a, libm.a)
+- HDF5 library (with parallel-I/O support enabled)
 
 -------------------------------------------
 
@@ -54,6 +52,8 @@ As stated previously, the MAKEFILE in the IFOS2D/par subdirectory will accept a 
                     running IFOS2D on a cluster with a parallel filesystem
                     (like Lustre or GPFS), we strongly recommend NOT using this option.  If you are running on a workstation or laptop
                     then you probably should try running with this option enabled.
+
+  **NONCRAY**        -> set to 1 if you are building IFOS2D on a non-Cray platform
 
   **INTEL_COMPILER** -> set to 1 if you wish to build IFOS2D with the Intel suite of compilers (icc/icpc/ifort).  
 
@@ -103,7 +103,7 @@ Finally, we setup the SLURM jobscript for our test run
           cp jobscripts/jobscript_TEST.slurm ./job
           open job and set WORKDIR to appropriate output directory.  This NEEDS to be the same output directory specified in the test_FW.json and test_INV.json input files
 
-Please note that you MUST make a copy of the appropriate jobscript into your par/ subdirectory.
+Please note that you MUST make a copy of the appropriate jobscript into your par/ subdirectory.  A new bash script called generate_runscript.sh is now available to auto-generate the appropriate SLURM jobscript.
 
 And we submit the job to the SLURM scheduler
 

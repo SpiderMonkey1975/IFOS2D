@@ -4,7 +4,7 @@
 
 NUM_MPI_TASKS=12
 NUM_NODES=1
-CRAY=1
+CRAY=0
 RUNNAME=TEST
 RUNTIME="00:20:00"
 
@@ -68,8 +68,8 @@ sed -i "9i #SBATCH --time=${RUNTIME}" jobscript
 sed -i '10i #SBATCH --export=NONE' jobscript
 
 if [ "$CRAY" = 1 ]; then
-   sed -i '14i module load cray-fftw cray-parallel-hdf5' jobscript
+   sed -i '15i module load cray-fftw cray-parallel-hdf5' jobscript
 else
-   sed -i '14i module swap gcc/4.8.4 gcc/7.2.0' jobscript
-   sed -i '15i module load openmpi fftw hdf5-parallel' jobscript
+   sed -i '15i module swap gcc/4.8.4 gcc/7.2.0' jobscript
+   sed -i '16i module load openmpi fftw hdf5-parallel' jobscript
 fi
