@@ -32,13 +32,14 @@ void taper_grad_shot(float ** waveconv,float ** taper_coeff, float **srcpos, int
     
     extern float DH, SRTRADIUS;
     extern int FREE_SURF, NX, NY, NXG, NYG, NPROCX, NPROCY, MYID, POS[3], VERBOSE, USE_WORKFLOW, WORKFLOW_STAGE, SRTSHAPE, FILTSIZE;
-    extern FILE *FP, *fp_taper = NULL;
+    extern FILE *FP;
     extern char TAPER_FILE_NAME[STRING_SIZE];
     
     /* local variables */
     int i, j, ii, jj, n, ijc, iy, ix, xx, yy, srctaper_gridpt, i1, j1;
     float  a, grad_tap, **waveconvtmp, **m, **edgemat, **mm, **msum, minm, maxm, x, y, rad, **taper_coeff_glob, maxrad;
     char  taper_file[STRING_SIZE];
+    FILE *fp_taper = NULL;
     
     if(sws==1){
         
