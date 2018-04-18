@@ -68,7 +68,7 @@ sed -i "9i #SBATCH --time=${RUNTIME}" jobscript
 sed -i '10i #SBATCH --export=NONE' jobscript
 
 if [ "$CRAY" = 1 ]; then
-   sed -i '15i module load cray-fftw cray-parallel-hdf5' jobscript
+   sed -i '15i module load cray-fftw cray-hdf5-parallel' jobscript
 else
    sed -i '15i module swap gcc/4.8.4 gcc/7.2.0' jobscript
    sed -i '16i module load openmpi fftw hdf5-parallel' jobscript
